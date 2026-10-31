@@ -249,7 +249,7 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
     right = ('<a href="%s.html">%s %s →</a>' % (next_ch['id'], esc(next_ch['no']), esc(next_ch['title']))
              if next_ch else '<span></span>')
     inner = (
-        '<nav class="crumb"><a href="../">课程题型讲义</a><span>/</span><a href="./">%s</a></nav>\n'
+        '<nav class="crumb"><a href="../">课程讲义</a><span>/</span><a href="./">%s</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="count">%d 题</p></header>\n'
         '%s\n<main class="list" id="list">\n%s\n</main>\n<footer class="pager">%s%s</footer>'
         % (esc(course['title']), esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
@@ -275,13 +275,13 @@ def course_page(course, counts):
     status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
     toc = '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(rows) if rows else ''
     inner = (
-        '<nav class="crumb"><a href="../">课程题型讲义</a></nav>\n'
+        '<nav class="crumb"><a href="../">课程讲义</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="en">%s</p>'
         '<p class="count">%s</p></header>%s'
         % (esc(course['volume']), esc(course['title']), esc(course['en']), status, toc))
     return PAGE.substitute(
-        title='%s · 课程题型讲义' % course['title'],
-        desc='%s 题型讲义目录。' % course['title'],
+        title='%s · 课程讲义' % course['title'],
+        desc='%s 讲义目录。' % course['title'],
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
         bodyclass='course', course=course['id'], chapter='index', inner=inner)
 
@@ -372,6 +372,21 @@ def book_html(c, i):
            esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph']))
 
 
+def letter_button(lt, i):
+    return ('<button class="letter" type="button" aria-haspopup="dialog" aria-label="拆开这封信：%s" style="--d:%d">'
+            '<span class="env" aria-hidden="true"><span class="env-back"></span><span class="env-paper"></span>'
+            '<span class="env-front"></span><span class="env-flap"></span><span class="env-seal"></span></span>'
+            '<span class="env-label">%s</span></button>' % (esc(lt['title']), i, esc(lt['label'])))
+
+
+def letter_dialog(lt):
+    paras = ''.join('<p>%s</p>' % esc(p) for p in lt['paragraphs'])
+    return ('<dialog class="letter-dialog" aria-labelledby="letter-title"><article class="paper">'
+            '<h2 id="letter-title">%s</h2>%s<p class="sign">%s<br>%s</p>'
+            '<form method="dialog"><button class="close">合上</button></form></article></dialog>'
+            % (esc(lt['title']), paras, esc(lt['sign']), esc(lt['date'])))
+
+
 def build_home(courses, site):
     by_series = {}
     for c in courses:
@@ -384,6 +399,9 @@ def build_home(courses, site):
         books = []
         for c in cs:
             books.append(book_html(c, i))
+            i += 1
+        if sno == min(by_series) and site.get('letter'):
+            books.append(letter_button(site['letter'], i))
             i += 1
         if sno == last:
             books.append(
@@ -400,7 +418,8 @@ def build_home(courses, site):
     ordered = sorted(courses, key=lambda c: c['order'])
     meta_html = '共%s辑<br><b>%s — %s</b>' % (cn(len(by_series)), esc(ordered[0]['volume']), esc(ordered[-1]['volume']))
     tpl = Template((TOOLS / 'index.template.html').read_text(encoding='utf8'))
-    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections))
+    dialog = letter_dialog(site['letter']) if site.get('letter') else ''
+    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections), LETTER_DIALOG=dialog)
 
     # 首页保持单文件：字体以 base64 内嵌（宋体按首页用到的字截取）
     visible = html.unescape(re.sub(r'<style>.*?</style>|<[^>]+>', '', page, flags=re.S))

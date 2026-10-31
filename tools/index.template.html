@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>课程题型讲义</title>
-<meta name="description" content="课程题型讲义丛书：复变函数与积分变换、大学物理、数值分析方法、电子电路基础、概率论与数理统计、固体物理基础。">
-<meta property="og:title" content="课程题型讲义 · Course Notes">
-<meta property="og:description" content="六门课程的题型讲义，持续更新。">
+<title>课程讲义</title>
+<meta name="description" content="课程讲义：各门课程的题型讲义、课程笔记与学习心得。">
+<meta property="og:title" content="课程讲义 · Course Notes">
+<meta property="og:description" content="各门课程的讲义与笔记，持续更新。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2314110f'/><rect x='12' y='14' width='7' height='38' rx='1' fill='%235a4a8c'/><rect x='21' y='18' width='6' height='34' rx='1' fill='%23a8482c'/><rect x='29' y='12' width='7' height='40' rx='1' fill='%23306650'/><rect x='38' y='16' width='6' height='36' rx='1' fill='%23285a8a'/><rect x='46' y='20' width='6' height='32' rx='1' fill='%23933a50'/></svg>">
 <style>
   /* FONTS:BEGIN */
@@ -114,6 +114,51 @@
   .book.light .spine h2{color:#2b2419}
   .book.light .spine .en{color:rgb(43 36 25 / .72)}
 
+  /* ============ 一封信 ============ */
+  .letter{
+    flex:none;align-self:flex-end;margin:0 calc(10px * var(--k)) 0 auto;padding:0 0 calc(4px * var(--k));
+    display:flex;flex-direction:column-reverse;align-items:center;gap:calc(18px * var(--k));
+    background:none;border:0;color:inherit;font:inherit;cursor:pointer;
+    animation:shelve .9s var(--ease) both;animation-delay:calc(var(--d) * 70ms + 120ms);
+  }
+  .env-label{font-family:var(--serif);font-size:13px;letter-spacing:.22em;color:var(--ink-3);transition:color .5s var(--ease),opacity .4s var(--ease)}
+  .letter:hover .env-label,.letter:focus-visible .env-label{color:var(--paper)}
+  .env{
+    position:relative;display:block;width:calc(168px * var(--k));height:calc(114px * var(--k));perspective:700px;
+    transform:rotate(-3deg);transition:transform .7s var(--ease);filter:drop-shadow(0 16px 14px rgb(0 0 0 / .55));
+  }
+  .letter:hover .env,.letter:focus-visible .env,.letter.open .env{transform:rotate(-1deg) translateY(-7px)}
+  .env > span{position:absolute;display:block}
+  .env-back{inset:0;background:#cfc2a2;border-radius:3px}
+  .env-paper{left:8%;right:8%;top:6%;bottom:14%;z-index:1;background:#f4ecd8;border-radius:2px;transition:transform .8s var(--ease)}
+  .env-paper::before{content:"";position:absolute;left:14%;right:14%;top:24%;height:1px;background:rgb(80 60 30 / .22);box-shadow:0 9px 0 rgb(80 60 30 / .22),0 18px 0 rgb(80 60 30 / .22)}
+  .letter:hover .env-paper,.letter:focus-visible .env-paper{transform:translateY(-14%)}
+  .letter.open .env-paper{transform:translateY(-46%)}
+  .env-front{inset:0;z-index:2;background:linear-gradient(135deg,#e6dbbf,#d8cba8);clip-path:polygon(0 0,50% 56%,100% 0,100% 100%,0 100%);border-radius:3px}
+  .env-flap{left:0;right:0;top:0;height:58%;z-index:3;background:linear-gradient(180deg,#dccfae,#cdbf9c);clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:50% 0;transition:transform .6s var(--ease),z-index 0s .28s}
+  .letter:hover .env-flap,.letter:focus-visible .env-flap,.letter.open .env-flap{transform:rotateX(180deg);z-index:0}
+  .env-seal{left:calc(50% - 9px);top:46%;width:18px;height:18px;z-index:4;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c4604a,#8a3326);box-shadow:0 2px 4px rgb(0 0 0 / .4);transition:opacity .3s}
+  .letter:hover .env-seal,.letter:focus-visible .env-seal,.letter.open .env-seal{opacity:0}
+
+  .letter-dialog{border:0;padding:0;background:transparent;color:#2b2419;width:min(580px,92vw);max-height:92vh;overflow:auto;margin:auto}
+  .letter-dialog::backdrop{background:rgb(10 8 6 / .74);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .letter-dialog[open]{animation:unfold .8s var(--ease) both}
+  @keyframes unfold{from{opacity:0;transform:translateY(46px) scale(.96)}to{opacity:1;transform:none}}
+  .paper{
+    position:relative;padding:clamp(30px,6vw,54px) clamp(26px,6vw,58px) 30px;border-radius:3px;
+    background:linear-gradient(180deg,#f4ebd5,#eadfc4);
+    box-shadow:0 40px 80px -20px rgb(0 0 0 / .8),inset 0 0 70px rgb(150 120 60 / .14);
+  }
+  .paper::before,.paper::after{content:"";position:absolute;left:0;right:0;height:1px;background:rgb(80 60 30 / .12)}
+  .paper::before{top:33%}
+  .paper::after{top:66%}
+  .paper h2{font-family:var(--serif);font-weight:500;font-size:22px;letter-spacing:.14em;margin-bottom:24px;color:#2b2419}
+  .paper p{font-family:var(--serif);font-size:16.5px;line-height:2.05;letter-spacing:.04em;margin:0 0 .85em}
+  .paper .sign{text-align:right;margin-top:1.8em;color:rgb(43 36 25 / .72)}
+  .paper form{display:flex;justify-content:center;margin-top:18px}
+  .paper .close{font-family:var(--serif);font-size:14px;letter-spacing:.3em;padding:6px 6px 6px 12px;color:rgb(43 36 25 / .7);background:none;border:0;border-bottom:1px solid rgb(43 36 25 / .3);cursor:pointer}
+  .paper .close:hover{color:#2b2419;border-bottom-color:#2b2419}
+
   /* ============ 待续：书架上的空位 ============ */
   .slot{
     flex:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between;
@@ -165,8 +210,20 @@
     .series-head{padding:0 2px 14px}
     .series + .series{margin-top:44px}
   }
+  @media (min-width:1241px){
+    .letter:hover .env-label,.letter:focus-visible .env-label,.letter.open .env-label{opacity:0}
+  }
+  @media (max-width:1240px){
+    .letter{order:-1;flex-direction:row;justify-content:flex-start;align-self:stretch;width:100%;margin:0;padding:16px 22px;gap:22px;border:1px dashed rgb(236 228 212 / .2);border-radius:2px;text-align:left}
+    .env{width:88px;height:60px}
+    .env-label{font-size:15px;letter-spacing:.16em;color:var(--ink-2)}
+  }
+  @media (min-width:721px) and (max-width:1240px){
+    .shelf{flex-wrap:wrap;row-gap:calc(30px * var(--k))}
+  }
   @media (prefers-reduced-motion:reduce){
-    .book,.slot{animation:none;transition:none}
+    .book,.slot,.letter,.env,.env-paper,.env-flap{animation:none;transition:none}
+    .letter-dialog[open]{animation:none}
   }
 </style>
 </head>
@@ -174,7 +231,7 @@
 <div class="wrap">
   <header>
     <div>
-      <h1>课程题型讲义</h1>
+      <h1>课程讲义</h1>
       <span class="en-title">${EN_TITLE}</span>
     </div>
     <p class="meta">${META}</p>
@@ -184,7 +241,21 @@
 ${SERIES}
   </main>
 
-  <footer><span class="zh">课程题型讲义</span><span>© 2026</span></footer>
+  <footer><span class="zh">课程讲义</span><span>© 2026</span></footer>
 </div>
+${LETTER_DIALOG}
+<script>
+(() => {
+  const btn = document.querySelector('.letter');
+  const dlg = document.querySelector('.letter-dialog');
+  if (!btn || !dlg || typeof dlg.showModal !== 'function') return;
+  btn.addEventListener('click', () => {
+    btn.classList.add('open');
+    setTimeout(() => { if (!dlg.open) { dlg.showModal(); dlg.scrollTop = 0; } }, 520);
+  });
+  dlg.addEventListener('close', () => btn.classList.remove('open'));
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+})();
+</script>
 </body>
 </html>

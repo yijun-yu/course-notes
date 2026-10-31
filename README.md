@@ -1,6 +1,6 @@
-# 课程题型讲义 · Course Notes
+# 课程讲义 · Course Notes
 
-各门课程题型讲义的总入口，以及每门课的题目页。
+各门课程讲义的总入口：题型讲义、课程笔记、学习心得。目前已有题型讲义的题目页。
 
 在线访问：https://yijun-yu.github.io/course-notes/
 
