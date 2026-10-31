@@ -118,6 +118,13 @@ def render_text(s):
     return '\n'.join(out)
 
 
+def render_inline(s):
+    """行内文字（如题型名）：把 e^{iax} 这类写法当作公式，其余只做转义。"""
+    s = re.sub(r'([A-Za-z]\^\{[^}]*\})', r'$\1$', s)
+    s = re.sub(r'\$([^$\n]+?)\$', lambda m: '\u0001%d\u0002' % M.add(m.group(1).strip(), False), s)
+    return html.escape(s, quote=False)
+
+
 # ------------------------------------------------------------------ 解析题目块
 def parse_chapter(path):
     text = path.read_text(encoding='utf8').replace('\r\n', '\n')
@@ -242,7 +249,7 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
         if p['type'] != last_type:
             items.append('<h2 class="type-head" data-type="%s"><span class="tid">%s</span><span>%s</span>'
                          '<span class="tier">%s</span></h2>'
-                         % (esc(p['type']), esc(p['type']), esc(p['type_name']), esc(p['tier'])))
+                         % (esc(p['type']), esc(p['type']), render_inline(p['type_name']), esc(p['tier'])))
             last_type = p['type']
         items.append(problem_html(p, n))
     left = '<a href="./">← 目录</a>'
