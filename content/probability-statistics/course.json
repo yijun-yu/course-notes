@@ -1,0 +1,19 @@
+{
+  "id": "probability-statistics",
+  "order": 5,
+  "series": 1,
+  "volume": "卷五",
+  "title": "概率论与数理统计",
+  "en": "Probability Theory & Mathematical Statistics",
+  "color": [
+    140,
+    52,
+    74
+  ],
+  "spine": {
+    "w": 140,
+    "h": 454
+  },
+  "glyph": "<path class=\"faint\" d=\"M3 32H37M20 9V32\" stroke-dasharray=\"1.5 2.5\"/><path d=\"M3 31.5C12 31.5 14 9 20 9S28 31.5 37 31.5\"/>",
+  "chapters": []
+}

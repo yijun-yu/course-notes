@@ -1,0 +1,20 @@
+{
+  "id": "light-civilization",
+  "order": 8,
+  "series": 2,
+  "volume": "卷八",
+  "title": "光基科技与人类文明",
+  "en": "Light-Based Technology & Human Civilization",
+  "color": [
+    205,
+    176,
+    110
+  ],
+  "spine": {
+    "w": 150,
+    "h": 472
+  },
+  "glyph": "<path d=\"M3 12H14M3 20H14M3 28H14\"/><path d=\"M17 6C23 14 23 26 17 34C11 26 11 14 17 6Z\"/><path class=\"faint\" d=\"M21 11L35 20M21 20H35M21 29L35 20\"/><circle class=\"dot\" cx=\"35\" cy=\"20\" r=\"2\"/>",
+  "light": true,
+  "chapters": []
+}

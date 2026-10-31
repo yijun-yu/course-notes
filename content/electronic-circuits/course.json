@@ -1,0 +1,19 @@
+{
+  "id": "electronic-circuits",
+  "order": 4,
+  "series": 1,
+  "volume": "卷四",
+  "title": "电子电路基础",
+  "en": "Fundamentals of Electronic Circuits",
+  "color": [
+    36,
+    84,
+    132
+  ],
+  "spine": {
+    "w": 152,
+    "h": 476
+  },
+  "glyph": "<circle class=\"dot\" cx=\"4\" cy=\"14\" r=\"1.8\"/><circle class=\"dot\" cx=\"36\" cy=\"14\" r=\"1.8\"/><path d=\"M4 14H11L13 9L17 19L21 9L25 19L27 14H36\"/><path class=\"faint\" d=\"M8 14V28M32 14V28M8 28H17M23 28H32M17 23V33M23 23V33\"/>",
+  "chapters": []
+}

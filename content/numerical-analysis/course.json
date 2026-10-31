@@ -1,0 +1,19 @@
+{
+  "id": "numerical-analysis",
+  "order": 3,
+  "series": 1,
+  "volume": "卷三",
+  "title": "数值分析方法",
+  "en": "Numerical Analysis",
+  "color": [
+    44,
+    98,
+    76
+  ],
+  "spine": {
+    "w": 134,
+    "h": 446
+  },
+  "glyph": "<path class=\"faint\" d=\"M3 20H37\"/><path d=\"M3 20L8 7L13 32L18 11L22 27L26 15L29 23.5L32 18L34.5 21L37 20\"/>",
+  "chapters": []
+}

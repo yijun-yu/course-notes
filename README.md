@@ -1,54 +1,49 @@
 # 课程题型讲义 · Course Notes
 
-各门课程题型讲义的总入口页。
+各门课程题型讲义的总入口，以及每门课的题目页。
 
 在线访问：https://yijun-yu.github.io/course-notes/
 
-## 文件
+首页是一个按「辑」分层的书架，每门课一本书；点进去是该课程的章目录，再点进去是题目页。旧版入口页（深色毛玻璃卡片）保存在分支 `v1-glass`：`git checkout v1-glass`。
 
-- `index.html`：入口页，单文件、无外部依赖（字体已截取子集内嵌）
-- `build_fonts.py`：字体打包脚本
-
-## 新增课程
-
-1. 在 `index.html` 里复制一本书（`<a class="book …">`），改「卷几」、课程名、英文名、链接和书脊尺寸（`--w` / `--h`），再给它一个书布色类（参照 `.c-complex` 等，颜色写在 `--c` 里）。
-2. 书脊底部的 `<svg class="glyph">` 是这门课的线描符号，换成和新课程相关的图形。
-3. 重新内嵌字体（新课程名里可能有新的汉字）：
-
-   ```bash
-   pip install fonttools
-   python3 build_fonts.py index.html \
-     --serif-sc NotoSerifCJK-Medium.ttc --serif-sc-index 2 \
-     --sans Inter-Regular.otf \
-     --italic texgyrepagella-italic.otf
-   ```
-
-   字体均为免费开源：Noto Serif CJK / Noto Serif SC、Inter（Google Fonts），TeX Gyre Pagella（CTAN）。也可以直接用 `NotoSerifSC-Medium.otf`，不需要 `--serif-sc-index`。
-
-旧版（深色毛玻璃卡片）保存在分支 `v1-glass`：`git checkout v1-glass`。
-
-## 题目页（每门课通用）
+## 目录结构
 
 ```
-content/<课程>/course.json   课程名、卷号、颜色、章节列表
-content/<课程>/<章>.md       题目原文（Astra 输出的题目块，一章一个文件）
-<课程>/index.html            章目录（生成）
-<课程>/<章>.html             题目页（生成）
-assets/                      通用样式、脚本、KaTeX、字体
-tools/build.py               构建脚本
+content/site.json              站点标题与「辑」的名称
+content/<课程>/course.json     课程信息：所属辑、卷号、名称、颜色、书脊尺寸、书脊图案、章节列表
+content/<课程>/<章>.md         题目原文（Astra 输出的题目块，一章一个文件）
+index.html                     首页书架（生成）
+<课程>/index.html              章目录（生成）
+<课程>/<章>.html               题目页（生成）
+assets/                        通用样式、脚本、KaTeX、字体
+tools/build.py                 构建脚本
+tools/index.template.html      首页模板
 ```
 
-- 题目页默认只显示题目；答案、思路点击展开；可按档次筛选、按题型分组、标记已做、一键复制题目（含 LaTeX 源码）、打印。
-- 公式在构建时用 KaTeX 预渲染，页面不依赖任何外部网络资源。
-- 新增或修改题目：把 Astra 的输出追加到 `content/<课程>/<章>.md`，然后在仓库根目录运行：
+`index.html`、`<课程>/` 下的页面都是生成的，不要手工修改。
 
-  ```bash
-  python3 -I tools/build.py .
-  ```
+## 日常操作
 
-  需要 Python 3、`fonttools` 和 Node.js（构建用到 KaTeX，脚本会优先用 `node_modules` 里的，否则用环境变量 `KATEX_PATH` 指向的那一份）。
-- 新增一门课：复制 `content/complex-analysis/course.json` 改成新课程，再在入口页 `index.html` 的卡片里确认链接目录名一致即可，页面样式通用，颜色由 `course.json` 里的 `color` 决定。
+在仓库根目录运行：
 
-## 子页面
+```bash
+python3 -I tools/build.py .
+```
 
-入口页的卡片链接到 `./<课程目录>/index.html`，这些页面由上面的构建脚本生成。
+- **追加或修改题目**：把 Astra 的输出追加到 `content/<课程>/<章>.md`，重新构建即可。
+- **新增一门课**：复制一份 `content/<课程>/course.json` 到新目录，修改下面这些字段，重新构建，首页书架和课程目录页会自动出现。
+  - `order`：全局卷序（决定「卷几」的顺序）
+  - `series`：属于第几辑（`content/site.json` 里定义各辑的名称；需要新开一辑就在那里加一项）
+  - `volume`、`title`、`en`：卷号、中文名、英文名
+  - `color`：书布色 `[r, g, b]`，课程页的强调色也取自这里
+  - `spine`：书脊的宽和高（像素）
+  - `glyph`：书脊底部的线描图案（40×40 的 SVG 内部代码）
+  - `light`：浅色书脊填 `true`，文字会改用深色
+  - `chapters`：章节列表，`id` 与 `content/<课程>/<章>.md` 的文件名对应
+- 「待续」位置总是放在最后一辑的末尾。
+
+## 构建依赖
+
+Python 3、`fonttools`、Node.js（用于 KaTeX 预渲染；脚本优先使用 `node_modules` 中的 KaTeX，否则读环境变量 `KATEX_PATH`）。字体用 Noto Serif CJK（宋体）、Inter、TeX Gyre Pagella，均为免费开源。
+
+`build_fonts.py` 是早期手动打包首页字体的脚本，现在这一步已由 `tools/build.py` 自动完成，可以忽略。

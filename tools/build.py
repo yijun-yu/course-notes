@@ -2,7 +2,7 @@
 """题目页构建脚本。
 
 输入：content/<课程>/course.json，以及同目录下的 <章>.md（Astra 输出的题目块）
-输出：<课程>/index.html（章目录）、<课程>/<章>.html（题目页）、assets/fonts 下的字体子集
+输出：index.html（首页书架）、<课程>/index.html（章目录）、<课程>/<章>.html（题目页）、assets/fonts 下的字体子集
 公式在构建时用 KaTeX 预渲染，页面不依赖任何外部资源。
 
 用法：python3 -I tools/build.py <仓库根目录>
@@ -272,11 +272,13 @@ def course_page(course, counts):
         else:
             rows.append('<li class="soon"><div class="row">%s<span class="n">待续</span></div></li>' % head)
     total = sum(counts.values())
+    status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
+    toc = '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(rows) if rows else ''
     inner = (
         '<nav class="crumb"><a href="../">课程题型讲义</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="en">%s</p>'
-        '<p class="count">已收录 %d 题</p></header>\n<ol class="toc">\n%s\n</ol>'
-        % (esc(course['volume']), esc(course['title']), esc(course['en']), total, '\n'.join(rows)))
+        '<p class="count">%s</p></header>%s'
+        % (esc(course['volume']), esc(course['title']), esc(course['en']), status, toc))
     return PAGE.substitute(
         title='%s · 课程题型讲义' % course['title'],
         desc='%s 题型讲义目录。' % course['title'],
@@ -316,40 +318,126 @@ def ensure_latin_fonts():
             warn('入口页里找不到字体 ' + fam)
 
 
-def build_serif_subset(strings):
-    """标题用的宋体：只截取页面标题里出现的字，体积很小。"""
-    candidates = ['/usr/share/fonts/opentype/noto/NotoSerifCJK-Medium.ttc']
-    src = next((c for c in candidates if pathlib.Path(c).exists()), None)
-    out = ROOT / 'assets' / 'fonts' / 'serif-sc.woff'
+ASCII = ''.join(chr(c) for c in range(0x20, 0x7F)) + '—·'
+
+
+def subset_woff(text):
+    """用 Noto Serif CJK Medium 截取指定文字，返回 woff 字节；找不到字体时返回 None。"""
+    src = next((c for c in ['/usr/share/fonts/opentype/noto/NotoSerifCJK-Medium.ttc']
+                if pathlib.Path(c).exists()), None)
     if not src:
-        warn('找不到 Noto Serif CJK，沿用已有的 serif-sc.woff')
-        return
+        return None
     from fontTools.subset import Options, Subsetter
     from fontTools.ttLib import TTCollection, TTFont
     idx = next(i for i, f in enumerate(TTCollection(src).fonts) if 'SC' in f['name'].getDebugName(1))
-    text = ''.join(sorted(set(''.join(strings)))) + ''.join(chr(c) for c in range(0x20, 0x7F)) + '—·'
     font = TTFont(src, fontNumber=idx)
     opts = Options()
     opts.flavor = 'woff'
     opts.layout_features = ['kern', 'liga', 'tnum']
     opts.name_IDs = []
     sub = Subsetter(opts)
-    sub.populate(text=text)
+    sub.populate(text=text + ASCII)
     sub.subset(font)
     font.flavor = 'woff'
     buf = io.BytesIO()
     font.save(buf)
-    out.write_bytes(buf.getvalue())
+    return buf.getvalue()
+
+
+def build_serif_subset(strings):
+    """课程页标题用的宋体：只截取标题里出现的字，体积很小。"""
+    data = subset_woff(''.join(sorted(set(''.join(strings)))))
+    if data is None:
+        warn('找不到 Noto Serif CJK，沿用已有的 serif-sc.woff')
+        return
+    (ROOT / 'assets' / 'fonts' / 'serif-sc.woff').write_bytes(data)
+
+
+# ------------------------------------------------------------------ 首页（书架）
+CN = '零一二三四五六七八九十'
+
+
+def cn(n):
+    return CN[n] if n <= 10 else '十' + CN[n - 10]
+
+
+def book_html(c, i):
+    light = ' light' if c.get('light') else ''
+    return (
+        '<a class="book%s" href="./%s/index.html" style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
+        '  <span class="vol">%s</span>\n'
+        '  <span class="spine"><h2>%s</h2><span class="en">%s</span></span>\n'
+        '  <svg class="glyph" viewBox="0 0 40 40" aria-hidden="true">%s</svg>\n</a>'
+        % (light, esc(c['id']), ' '.join(map(str, c['color'])), c['spine']['w'], c['spine']['h'], i,
+           esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph']))
+
+
+def build_home(courses, site):
+    by_series = {}
+    for c in courses:
+        by_series.setdefault(c['series'], []).append(c)
+    last = max(by_series)
+    sections, i = [], 0
+    for sno in sorted(by_series):
+        meta = site['series'][sno - 1]
+        cs = sorted(by_series[sno], key=lambda c: c['order'])
+        books = []
+        for c in cs:
+            books.append(book_html(c, i))
+            i += 1
+        if sno == last:
+            books.append(
+                '<div class="slot" aria-label="待续" style="--d:%d"><span class="vol">%02d — ∞</span>'
+                '<span class="spine"><h2>待续</h2><span class="en">More volumes to come</span></span>'
+                '<span></span></div>' % (i, len(courses) + 1))
+        rng = cs[0]['volume'] if len(cs) == 1 else '%s — %s' % (cs[0]['volume'], cs[-1]['volume'])
+        sections.append(
+            '<section class="series">\n'
+            '<h2 class="series-head"><span class="sno">%s</span><span class="sname">%s</span>'
+            '<span class="srange">%s</span></h2>\n<div class="shelf">\n%s\n</div>\n'
+            '<div class="plank" aria-hidden="true"></div>\n</section>'
+            % (esc(meta['no']), esc(meta['name']), esc(rng), '\n'.join(books)))
+    ordered = sorted(courses, key=lambda c: c['order'])
+    meta_html = '共%s辑<br><b>%s — %s</b>' % (cn(len(by_series)), esc(ordered[0]['volume']), esc(ordered[-1]['volume']))
+    tpl = Template((TOOLS / 'index.template.html').read_text(encoding='utf8'))
+    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections))
+
+    # 首页保持单文件：字体以 base64 内嵌（宋体按首页用到的字截取）
+    visible = html.unescape(re.sub(r'<style>.*?</style>|<[^>]+>', '', page, flags=re.S))
+    serif = subset_woff(''.join(sorted(set(visible))))
+    fonts = ROOT / 'assets' / 'fonts'
+
+    def face(family, data, style='normal', weight='400'):
+        return ('  @font-face{font-family:"%s";font-style:%s;font-weight:%s;font-display:swap;'
+                'src:url(data:font/woff;base64,%s) format("woff")}'
+                % (family, style, weight, base64.b64encode(data).decode()))
+
+    faces = []
+    if serif is not None:
+        faces.append(face('Portal Serif SC', serif, weight='400 600'))
+    else:
+        warn('找不到 Noto Serif CJK，首页没有内嵌宋体')
+    faces.append(face('Portal Sans', (fonts / 'portal-sans.woff').read_bytes()))
+    faces.append(face('Portal Italic', (fonts / 'portal-italic.woff').read_bytes(), style='italic'))
+    return re.sub(r'/\* FONTS:BEGIN \*/.*?/\* FONTS:END \*/',
+                  lambda m: '/* FONTS:BEGIN */\n' + '\n'.join(faces) + '\n  /* FONTS:END */', page, flags=re.S)
 
 
 # ------------------------------------------------------------------ 主流程
 def main():
-    pages = {}
-    serif_text = ['课程题型讲义', '待续', '卷一二三四五六七八九十', '第章综合']
-    summary = []
+    site = json.loads((CONTENT / 'site.json').read_text(encoding='utf8'))
+    courses = []
     for cfile in sorted(CONTENT.glob('*/course.json')):
-        course = json.loads(cfile.read_text(encoding='utf8'))
-        cdir = cfile.parent
+        c = json.loads(cfile.read_text(encoding='utf8'))
+        c['_dir'] = cfile.parent
+        courses.append(c)
+    courses.sort(key=lambda c: c.get('order', 99))
+
+    pages = {}
+    serif_text = [site['title'], '待续', '卷一二三四五六七八九十', '第章综合']
+    summary = []
+    for course in courses:
+        cdir = course['_dir']
         serif_text += [course['title'], course['volume']]
         chapters = course['chapters']
         data = {}
@@ -376,8 +464,10 @@ def main():
 
     ensure_latin_fonts()
     build_serif_subset(serif_text)
+    (ROOT / 'index.html').write_text(build_home(courses, site), encoding='utf8')
     print('\n'.join(summary))
-    print('页面 %d 个，公式 %d 条，警告 %d 条' % (len(pages), len(M.items), len(WARNINGS)))
+    print('课程 %d 门，页面 %d 个（另含首页），公式 %d 条，警告 %d 条'
+          % (len(courses), len(pages), len(M.items), len(WARNINGS)))
 
 
 main()
