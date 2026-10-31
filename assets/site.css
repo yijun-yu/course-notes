@@ -44,7 +44,7 @@ h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,6.4vw,64px);lin
 .toc li{border-bottom:1px solid var(--rule)}
 .toc a,.toc .row{display:flex;align-items:baseline;gap:14px;padding:20px 4px;text-decoration:none;transition:background .4s var(--ease),padding .4s var(--ease)}
 .toc a:hover{background:rgb(var(--c) / .16);padding-left:14px}
-.toc .no{flex:none;width:4.2em;font-family:var(--serif);font-size:15px;letter-spacing:.2em;color:rgb(var(--ca))}
+.toc .no{flex:none;min-width:4.2em;white-space:nowrap;font-family:var(--serif);font-size:15px;letter-spacing:.2em;color:rgb(var(--ca))}
 .toc .t{font-family:var(--serif);font-size:22px;letter-spacing:.06em;color:var(--paper)}
 .toc .dots{flex:1;align-self:end;border-bottom:1px dotted rgb(236 228 212 / .2);transform:translateY(-.35em);min-width:16px}
 .toc .n{font-size:13px;letter-spacing:.1em;color:var(--ink-2);white-space:nowrap}
@@ -122,6 +122,67 @@ details.idea>summary{font-size:13px;letter-spacing:.12em;color:var(--ink-2);padd
 details.idea>summary:hover{color:var(--paper)}
 .idea-body{margin-top:6px;font-size:16px;line-height:1.85;color:rgb(236 228 212 / .82)}
 
+/* ---------- 讲义（知识点）页 ---------- */
+.notes .wrap{max-width:860px}
+.kp-toc{margin:18px 0 8px}
+.kp-toc ol{list-style:none;border-top:1px solid var(--rule)}
+.kp-toc li{border-bottom:1px solid var(--rule)}
+.kp-toc a{display:flex;align-items:baseline;gap:14px;padding:12px 4px;text-decoration:none;transition:background .3s var(--ease),padding .3s var(--ease)}
+.kp-toc a:hover{background:rgb(var(--c) / .16);padding-left:12px}
+.kp-toc .kno{flex:none;width:2.6em;font-variant-numeric:tabular-nums;color:rgb(var(--ca));font-size:14px;letter-spacing:.06em}
+.kp-toc .kt{font-family:var(--serif);font-size:17px;color:var(--paper);letter-spacing:.04em}
+.kp-toc .ken{margin-left:auto;font-family:var(--italic);font-style:italic;font-size:14px;color:var(--ink-3);text-align:right}
+.intro{margin:22px 0 0;font-size:16.5px;line-height:1.9}
+
+.kp{padding:44px 0 18px;border-top:1px solid rgb(var(--c) / .7);margin-top:40px;scroll-margin-top:60px}
+.kp h2{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:22px;font-weight:500}
+.kp h2 .kno{font-family:var(--serif);font-size:26px;color:rgb(var(--ca));font-variant-numeric:tabular-nums}
+.kp h2 .kt{font-family:var(--serif);font-size:clamp(24px,3.6vw,30px);letter-spacing:.04em;color:var(--paper)}
+.kp h2 .ken{flex-basis:100%;font-family:var(--italic);font-style:italic;font-size:17px;color:var(--ink-3)}
+
+.notes-body,.intro{font-size:16.5px;line-height:1.9;color:var(--ink)}
+.notes-body p,.intro p{margin:.6em 0}
+.notes-body h4{margin:30px 0 8px;font:600 14px/1.5 var(--sans);letter-spacing:.14em;color:rgb(var(--ca))}
+.notes-body h5{margin:18px 0 4px;font:600 15px/1.5 var(--sans);color:var(--paper)}
+.notes-body ul,.notes-body ol,.intro ul,.intro ol{margin:.5em 0 .5em 1.4em}
+.notes-body li,.intro li{margin:.32em 0;padding-left:.2em}
+.notes-body ul>li::marker,.intro ul>li::marker{color:rgb(var(--ca))}
+.notes-body strong,.intro strong{color:var(--paper);font-weight:600}
+.notes-body code{font-size:.9em;background:rgb(236 228 212 / .08);padding:1px 5px;border-radius:4px}
+span.disp{display:block}
+.kp{scroll-margin-top:60px}
+
+.tbl{overflow-x:auto;margin:.8em 0;scrollbar-width:thin}
+.tbl table{border-collapse:collapse;font-size:15px;line-height:1.6;min-width:60%}
+.tbl th,.tbl td{padding:7px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+.tbl th{font-weight:600;color:rgb(var(--ca));font-size:13.5px;letter-spacing:.06em;border-bottom-color:rgb(var(--c) / .8)}
+.tbl td{font-variant-numeric:tabular-nums}
+
+.box{margin:22px 0;border:1px solid var(--rule);border-radius:10px;background:rgb(236 228 212 / .025);overflow:hidden}
+.box-h{display:flex;align-items:baseline;gap:12px;padding:10px 18px;border-bottom:1px solid var(--rule);font-size:13px;letter-spacing:.12em;color:var(--ink-2)}
+.btag{color:rgb(var(--ca));font-weight:600}
+.bt{color:var(--paper);letter-spacing:.04em;font-size:14.5px}
+.box-b{padding:6px 20px 10px}
+.box.quick{border-color:rgb(var(--c) / .9);background:rgb(var(--c) / .14)}
+.box.quick .box-h{border-bottom-color:rgb(var(--c) / .7)}
+.box.example{border-left:3px solid rgb(var(--ca))}
+.box.pitfall{border-color:rgb(224 150 112 / .45)}
+.box.pitfall .btag{color:#e0a070}
+.box.exam{border-color:rgb(224 196 112 / .45);background:rgb(224 196 112 / .05)}
+.box.exam .btag{color:#e0c070}
+.box.note .btag{color:var(--ink-2)}
+
+details.proof{margin:16px 0;border-left:2px solid var(--rule);padding-left:18px}
+details.proof.must{border-left-color:rgb(var(--ca))}
+details.proof>summary{display:flex;align-items:baseline;gap:12px;padding:6px 0;font-size:15px;color:var(--ink-2)}
+details.proof>summary:hover{color:var(--paper)}
+details.proof>summary::before{content:"";flex:none;width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg) translateY(-2px);transition:transform .3s var(--ease)}
+details.proof[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+.ptag{font-size:12px;letter-spacing:.14em;color:rgb(var(--ca));border:1px solid rgb(var(--c) / .8);border-radius:999px;padding:0 9px}
+.proof.opt .ptag{color:var(--ink-3);border-color:var(--rule)}
+.proof-body{padding:4px 0 8px;font-size:16px;line-height:1.85;color:rgb(236 228 212 / .9)}
+.only-must details.proof.opt{display:none}
+
 /* ---------- 页脚翻页 ---------- */
 .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:14px;letter-spacing:.06em;color:var(--ink-2)}
 .pager a{text-decoration:none}
@@ -151,5 +212,14 @@ details.idea>summary:hover{color:var(--paper)}
   .prob{grid-template-columns:1fr;break-inside:avoid;padding:16px 0}
   .stmt,.ans-body,.idea-body{color:#111}
   details.ans>summary{border-color:#888;color:#333}
+  .kp-toc,.notes .head .count{display:none}
+  .kp{break-before:auto;margin-top:18px;padding-top:18px;border-top:1.5px solid #333}
+  .kp h2 .kt,.kp h2 .kno{color:#000}
+  .notes-body,.proof-body,.intro{color:#111;font-size:12.5pt;line-height:1.6}
+  .box{background:none!important;break-inside:avoid;border-color:#999}
+  .box.quick{border:1.5px solid #333}
+  .box .btag,.box.pitfall .btag,.box.exam .btag,.ptag,.notes-body h4{color:#333}
+  details.proof{border-left-color:#999}
+  details.proof>summary::before{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

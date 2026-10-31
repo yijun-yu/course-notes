@@ -268,18 +268,218 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
         bodyclass='chapter', course=course['id'], chapter=ch['id'], inner=inner)
 
 
+# ------------------------------------------------------------------ 讲义（知识点）页
+# 课程 course.json 里写 "kind": "notes" 时，章节文件按讲义格式解析：
+#   ## 1.1 中文标题 | English Title        一个知识点
+#   :::quick / :::proof ★ 标题 / :::example 标题 / :::pitfall / :::exam / :::note 标题   …   :::
+#   #### 小标题、- 无序列表、1. 有序列表、| 表格 |、$..$、$$..$$、**粗体**
+BOX_NAMES = {'quick': '速查', 'example': '例题', 'pitfall': '易错点', 'exam': '真题考点', 'note': '补充'}
+
+
+def render_rich(s):
+    """讲义用的 Markdown 子集 → HTML（含公式占位符）。"""
+    s = re.sub(r'\$\$(.+?)\$\$', lambda m: '\u0001%d\u0002' % M.add(m.group(1).strip(), True), s, flags=re.S)
+    s = re.sub(r'\$((?:[^$\n]|\n(?!\s*\n))+?)\$',
+               lambda m: '\u0001%d\u0002' % M.add(m.group(1).strip(), False), s)
+    s = html.escape(s, quote=False)
+    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    s = re.sub(r'`([^`\n]+)`', r'<code>\1</code>', s)
+
+    out, para, items, kind, rows = [], [], [], None, []
+
+    def flush_para():
+        nonlocal para
+        if para:
+            out.append('<p>' + join_lines(para) + '</p>')
+            para = []
+
+    def li(x):
+        sub = ''
+        if x['sub']:
+            sub = '<%s>%s</%s>' % (x['sk'], ''.join('<li>%s</li>' % wrap_disp(join_lines(y)) for y in x['sub']), x['sk'])
+        return '<li>%s%s</li>' % (wrap_disp(join_lines(x['l'])), sub)
+
+    def flush_list():
+        nonlocal items, kind
+        if items:
+            out.append('<%s>%s</%s>' % (kind, ''.join(li(x) for x in items), kind))
+        items, kind = [], None
+
+    def add_cont(t):
+        x = items[-1]
+        (x['sub'][-1] if x['sub'] else x['l']).append(t)
+
+    def flush_table():
+        nonlocal rows
+        if rows:
+            cells = [[c.strip() for c in r.strip().strip('|').split('|')] for r in rows]
+            body = [r for r in cells if not all(re.fullmatch(r':?-{2,}:?', c or '--') for c in r)]
+            head, rest = body[0], body[1:]
+            out.append('<div class="tbl"><table><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>' % (
+                ''.join('<th>%s</th>' % c for c in head),
+                ''.join('<tr>%s</tr>' % ''.join('<td>%s</td>' % c for c in r) for r in rest)))
+            out[-1] = wrap_disp(out[-1])
+            rows = []
+
+    def flush_all():
+        flush_para()
+        flush_list()
+        flush_table()
+
+    for line in s.split('\n'):
+        t = line.strip()
+        if not t:
+            flush_all()
+            continue
+        if t.startswith('|'):
+            flush_para()
+            flush_list()
+            rows.append(t)
+            continue
+        flush_table()
+        mh = re.match(r'^(#{4,5})\s+(.*)$', t)
+        if mh:
+            flush_all()
+            out.append('<h%d>%s</h%d>' % (len(mh.group(1)), mh.group(2), len(mh.group(1))))
+            continue
+        if any(M.is_display(int(i)) for i in PH.findall(t)) and not re.match(r'^(-|\d+\.)\s', t):
+            if items and line.startswith('  '):
+                add_cont(t)
+                continue
+            flush_list()
+            for part in re.split('(\u0001\\d+\u0002)', t):
+                if not part.strip():
+                    continue
+                m = re.fullmatch('\u0001(\\d+)\u0002', part)
+                if m and M.is_display(int(m.group(1))):
+                    flush_para()
+                    out.append('<div class="disp">%s</div>' % part)
+                else:
+                    para.append(part.strip())
+            continue
+        mul = re.match(r'^-\s+(.*)$', t)
+        mol = re.match(r'^\d+\.\s+(.*)$', t)
+        if (mul or mol) and items and line.startswith('  '):
+            x = items[-1]
+            x['sk'] = x['sk'] or ('ul' if mul else 'ol')
+            x['sub'].append([(mul or mol).group(1)])
+        elif mul or mol:
+            flush_para()
+            k = 'ul' if mul else 'ol'
+            if kind and kind != k:
+                flush_list()
+            kind = k
+            items.append({'l': [(mul or mol).group(1)], 'sub': [], 'sk': None})
+        elif items and line.startswith('  '):
+            add_cont(t)
+        else:
+            flush_list()
+            para.append(t)
+    flush_all()
+    return '\n'.join(out)
+
+
+def wrap_disp(s):
+    """列表项、表格里的独立公式：放进可横向滚动的块。"""
+    return PH.sub(lambda m: ('<span class="disp">%s</span>' % m.group(0)) if M.is_display(int(m.group(1)))
+                  else m.group(0), s)
+
+
+def parse_notes(path):
+    """讲义文件 → {'intro': html, 'kps': [{'no','zh','en','html'}]}"""
+    text = path.read_text(encoding='utf8').replace('\r\n', '\n')
+    parts = re.split(r'(?m)^##\s+(.+)$', text)
+    intro, kps = parts[0], []
+    for head, body in zip(parts[1::2], parts[2::2]):
+        mh = re.match(r'^(\d+(?:\.\d+)*)\s+(.*)$', head.strip())
+        no, rest = (mh.group(1), mh.group(2)) if mh else ('', head.strip())
+        zh, _, en = rest.partition('|')
+        kps.append({'no': no, 'zh': zh.strip(), 'en': en.strip(), 'html': render_blocks(body, path.name)})
+    return {'intro': render_blocks(intro, path.name), 'kps': kps}
+
+
+def render_blocks(text, fname):
+    out, buf, box = [], [], None
+    for line in text.split('\n'):
+        m = re.match(r'^:::\s*(\w+)?\s*(.*)$', line.strip())
+        if m and box is None and m.group(1):
+            if buf:
+                out.append(render_rich('\n'.join(buf)))
+            buf, box = [], (m.group(1), m.group(2).strip())
+        elif m and box is not None and not m.group(1):
+            out.append(box_html(box[0], box[1], render_rich('\n'.join(buf)), fname))
+            buf, box = [], None
+        else:
+            buf.append(line)
+    if box is not None:
+        warn('%s：容器 :::%s 没有闭合' % (fname, box[0]))
+        out.append(box_html(box[0], box[1], render_rich('\n'.join(buf)), fname))
+    elif buf:
+        out.append(render_rich('\n'.join(buf)))
+    return '\n'.join(x for x in out if x.strip())
+
+
+def box_html(name, title, inner, fname):
+    t = render_inline(title) if title else ''
+    if name == 'proof':
+        star = 'must' if '★' in title else 'opt'
+        return ('<details class="proof %s"><summary><span class="ptag">证明</span>%s</summary>'
+                '<div class="proof-body">%s</div></details>' % (star, t, inner))
+    if name not in BOX_NAMES:
+        warn('%s：未知容器 :::%s' % (fname, name))
+    label = BOX_NAMES.get(name, name)
+    return ('<div class="box %s"><div class="box-h"><span class="btag">%s</span>%s</div>'
+            '<div class="box-b">%s</div></div>' % (esc(name), label, ('<span class="bt">%s</span>' % t) if t else '', inner))
+
+
+def notes_page(course, ch, notes, next_ch):
+    kps = notes['kps']
+    toc = ''.join('<li><a href="#kp-%s"><span class="kno">%s</span><span class="kt">%s</span>'
+                  '<span class="ken">%s</span></a></li>'
+                  % (esc(k['no'].replace('.', '-')), esc(k['no']), render_inline(k['zh']), esc(k['en'])) for k in kps)
+    secs = ''.join(
+        '<section class="kp" id="kp-%s"><h2><span class="kno">%s</span><span class="kt">%s</span>'
+        '<span class="ken">%s</span></h2>\n%s\n</section>\n'
+        % (esc(k['no'].replace('.', '-')), esc(k['no']), render_inline(k['zh']), esc(k['en']), k['html']) for k in kps)
+    bar = ('<div class="bar" role="toolbar" aria-label="显示选项">'
+           '<label class="chk"><input type="checkbox" id="opt-proofs"><span>展开全部证明</span></label>'
+           '<label class="chk"><input type="checkbox" id="opt-only-must"><span>只看 ★ 证明</span></label>'
+           '<span class="sp"></span><button type="button" class="btn" id="btn-print">打印</button></div>')
+    left = '<a href="./">← 目录</a>'
+    right = ('<a href="%s.html">%s %s →</a>' % (next_ch['id'], esc(next_ch['no']), esc(next_ch['title']))
+             if next_ch else '<span></span>')
+    en = '<p class="en">%s</p>' % esc(ch['en']) if ch.get('en') else ''
+    inner = (
+        '<nav class="crumb"><a href="../">课程讲义</a><span>/</span><a href="./">%s</a></nav>\n'
+        '<header class="head"><p class="kicker">%s</p><h1>%s</h1>%s<p class="count">%d 个知识点</p></header>\n'
+        '%s\n<nav class="kp-toc" aria-label="本讲知识点"><ol>%s</ol></nav>\n'
+        '<div class="intro">%s</div>\n<main class="notes-body">\n%s</main>\n<footer class="pager">%s%s</footer>'
+        % (esc(course['title']), esc(ch['no']), esc(ch['title']), en, len(kps), bar, toc,
+           notes['intro'], secs, left, right))
+    return PAGE.substitute(
+        title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
+        desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], len(kps)),
+        c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
+        bodyclass='notes', course=course['id'], chapter=ch['id'], inner=inner)
+
+
 def course_page(course, counts):
+    notes = course.get('kind') == 'notes'
+    unit = '个知识点' if notes else '题'
     rows = []
     for ch in course['chapters']:
         n = counts.get(ch['id'])
         head = '<span class="no">%s</span><span class="t">%s</span><span class="dots"></span>' % (
             esc(ch['no']), esc(ch['title']))
         if n:
-            rows.append('<li><a href="%s.html">%s<span class="n">%d 题</span></a></li>' % (ch['id'], head, n))
+            rows.append('<li><a href="%s.html">%s<span class="n">%d %s</span></a></li>' % (ch['id'], head, n, unit))
         else:
             rows.append('<li class="soon"><div class="row">%s<span class="n">待续</span></div></li>' % head)
     total = sum(counts.values())
-    status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
+    if notes:
+        status = '已收录 %d 讲 · %d 个知识点' % (len(counts), total) if total else '讲义整理中，敬请期待'
+    else:
+        status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
     toc = '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(rows) if rows else ''
     inner = (
         '<nav class="crumb"><a href="../">课程讲义</a></nav>\n'
@@ -467,6 +667,21 @@ def main():
         serif_text += [course['title'], course['volume']]
         chapters = course['chapters']
         data = {}
+        if course.get('kind') == 'notes':
+            for ch in chapters:
+                serif_text += [ch['no'], ch['title']]
+                f = cdir / (ch['id'] + '.md')
+                if f.exists():
+                    data[ch['id']] = parse_notes(f)
+                    serif_text += [k['zh'] for k in data[ch['id']]['kps']]
+            avail = [ch for ch in chapters if ch['id'] in data]
+            for i, ch in enumerate(avail):
+                nxt = avail[i + 1] if i + 1 < len(avail) else None
+                pages[ROOT / course['id'] / (ch['id'] + '.html')] = notes_page(course, ch, data[ch['id']], nxt)
+                summary.append('%s %s：%d 个知识点' % (course['id'], ch['id'], len(data[ch['id']]['kps'])))
+            pages[ROOT / course['id'] / 'index.html'] = course_page(
+                course, {k: len(v['kps']) for k, v in data.items()})
+            continue
         for ch in chapters:
             serif_text += [ch['no'], ch['title']]
             f = cdir / (ch['id'] + '.md')
