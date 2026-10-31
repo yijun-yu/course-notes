@@ -188,9 +188,9 @@ PAGE = Template('''<!DOCTYPE html>
 <meta name="description" content="${desc}">
 <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../assets/katex/katex.min.css">
-<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site.css?v=${vcss}">
 <style>:root{--c:${c};--ca:${ca}}</style>
-<script defer src="../assets/site.js"></script>
+<script defer src="../assets/site.js?v=${vjs}"></script>
 </head>
 <body class="${bodyclass}" data-course="${course}" data-chapter="${chapter}">
 <div class="wrap">
@@ -199,6 +199,12 @@ ${inner}
 </body>
 </html>
 ''')
+
+
+def asset_version(name):
+    """静态文件内容的短哈希，加在链接后面，样式更新后浏览器不会继续用旧缓存。"""
+    import hashlib
+    return hashlib.sha1((ROOT / 'assets' / name).read_bytes()).hexdigest()[:8]
 
 
 def lighten(rgb, k=0.55):
@@ -262,6 +268,7 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
         % (esc(course['title']), esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
            '\n'.join(items), left, right))
     return PAGE.substitute(
+        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
         desc='%s %s %s，共 %d 题。' % (course['title'], ch['no'], ch['title'], len(probs)),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
@@ -457,6 +464,7 @@ def notes_page(course, ch, notes, next_ch):
         % (esc(course['title']), esc(ch['no']), esc(ch['title']), en, len(kps), bar, toc,
            notes['intro'], secs, left, right))
     return PAGE.substitute(
+        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
         desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], len(kps)),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
@@ -487,6 +495,7 @@ def course_page(course, counts):
         '<p class="count">%s</p></header>%s'
         % (esc(course['volume']), esc(course['title']), esc(course['en']), status, toc))
     return PAGE.substitute(
+        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
         title='%s · 课程讲义' % course['title'],
         desc='%s 讲义目录。' % course['title'],
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
