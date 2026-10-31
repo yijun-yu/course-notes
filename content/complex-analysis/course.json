@@ -1,0 +1,17 @@
+{
+  "id": "complex-analysis",
+  "volume": "卷一",
+  "title": "复变函数与积分变换",
+  "en": "Complex Analysis & Integral Transforms",
+  "color": [84, 68, 134],
+  "chapters": [
+    { "id": "ch01", "no": "第一章", "title": "复数的预备知识" },
+    { "id": "ch02", "no": "第二章", "title": "解析函数" },
+    { "id": "ch03", "no": "第三章", "title": "复变函数的积分" },
+    { "id": "ch04", "no": "第四章", "title": "泰勒级数与洛朗级数" },
+    { "id": "ch05", "no": "第五章", "title": "留数" },
+    { "id": "ch06", "no": "第六章", "title": "保角映射" },
+    { "id": "ch07", "no": "第七章", "title": "拉普拉斯变换" },
+    { "id": "ch08", "no": "综合", "title": "跨章节综合题" }
+  ]
+}

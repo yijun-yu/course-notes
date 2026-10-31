@@ -27,7 +27,28 @@
 
 旧版（深色毛玻璃卡片）保存在分支 `v1-glass`：`git checkout v1-glass`。
 
+## 题目页（每门课通用）
+
+```
+content/<课程>/course.json   课程名、卷号、颜色、章节列表
+content/<课程>/<章>.md       题目原文（Astra 输出的题目块，一章一个文件）
+<课程>/index.html            章目录（生成）
+<课程>/<章>.html             题目页（生成）
+assets/                      通用样式、脚本、KaTeX、字体
+tools/build.py               构建脚本
+```
+
+- 题目页默认只显示题目；答案、思路点击展开；可按档次筛选、按题型分组、标记已做、一键复制题目（含 LaTeX 源码）、打印。
+- 公式在构建时用 KaTeX 预渲染，页面不依赖任何外部网络资源。
+- 新增或修改题目：把 Astra 的输出追加到 `content/<课程>/<章>.md`，然后在仓库根目录运行：
+
+  ```bash
+  python3 -I tools/build.py .
+  ```
+
+  需要 Python 3、`fonttools` 和 Node.js（构建用到 KaTeX，脚本会优先用 `node_modules` 里的，否则用环境变量 `KATEX_PATH` 指向的那一份）。
+- 新增一门课：复制 `content/complex-analysis/course.json` 改成新课程，再在入口页 `index.html` 的卡片里确认链接目录名一致即可，页面样式通用，颜色由 `course.json` 里的 `color` 决定。
+
 ## 子页面
 
-卡片默认链接到 `./<课程目录>/index.html`，例如 `./complex-analysis/index.html`。
-在仓库里建同名文件夹放入各课程页面即可。
+入口页的卡片链接到 `./<课程目录>/index.html`，这些页面由上面的构建脚本生成。
