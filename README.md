@@ -25,7 +25,7 @@
 
    字体均为免费开源：Noto Serif CJK / Noto Serif SC、Inter（Google Fonts），TeX Gyre Pagella（CTAN）。也可以直接用 `NotoSerifSC-Medium.otf`，不需要 `--serif-sc-index`。
 
-旧版（深色毛玻璃卡片）保存在标签 `v1-glass`：`git checkout v1-glass`。
+旧版（深色毛玻璃卡片）保存在分支 `v1-glass`：`git checkout v1-glass`。
 
 ## 子页面
 
