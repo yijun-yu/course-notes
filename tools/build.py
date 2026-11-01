@@ -279,6 +279,26 @@ def chapter_path(course, ch):
             % (esc(course['title']), esc(ch['no']), esc(ch['title'])))
 
 
+def types_side(probs):
+    """左侧题型目录：每个题型一行，点击跳到该题型；滚动时高亮当前所在题型（见 site.js）。"""
+    order, info = [], {}
+    for n, p in enumerate(probs, 1):
+        t = p['type']
+        if t not in info:
+            info[t] = {'name': p['type_name'], 'first': n, 'n': 0}
+            order.append(t)
+        info[t]['n'] += 1
+    if len(order) < 2:
+        return ''
+    rows = ''.join(
+        '<li data-type="%s"><a href="#q%d"><span class="tid">%s</span><span class="tn">%s</span>'
+        '<span class="tc">%d</span></a></li>'
+        % (esc(t), info[t]['first'], esc(t), render_inline(info[t]['name']), info[t]['n']) for t in order)
+    return ('<aside class="side" aria-label="题型目录"><div class="side-h"><h3>题型</h3>'
+            '<button type="button" class="side-tgl" aria-expanded="true">收起</button></div>'
+            '<ol class="side-list">%s</ol></aside>' % rows)
+
+
 def chapter_page(course, ch, probs, prev_ch, next_ch):
     items, last_type = [], None
     for n, p in enumerate(probs, 1):
@@ -292,9 +312,10 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
     right = ('<a href="%s.html">%s %s →</a>' % (next_ch['id'], esc(next_ch['no']), esc(next_ch['title']))
              if next_ch else '<span></span>')
     inner = (
+        '<div class="cols">\n%s\n<div class="col">\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="count">%d 题</p></header>\n'
-        '%s\n<main class="list" id="list">\n%s\n</main>\n<footer class="pager">%s%s</footer>'
-        % (esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
+        '%s\n<main class="list" id="list">\n%s\n</main>\n<footer class="pager">%s%s</footer>\n</div>\n</div>'
+        % (types_side(probs), esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
            '\n'.join(items), left, right))
     return PAGE.substitute(
         **page_assets(), rail=rail_html('../', chapter_path(course, ch)),

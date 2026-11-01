@@ -2,6 +2,7 @@
 /* 首页按书架宽度对齐，内页按正文宽度对齐 */
 body{--rw:1160px;--rp:32px}
 body:not(.home){--rw:820px;--rp:28px}
+@media (min-width:1180px){body.chapter:has(.cols){--rw:1160px}}
 .rail{
   position:sticky;top:0;z-index:20;height:64px;pointer-events:none;
   padding:8px max(10px, calc((100% - var(--rw)) / 2 + var(--rp) - 16px));

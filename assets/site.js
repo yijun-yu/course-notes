@@ -136,6 +136,68 @@
   const printBtn = $('#btn-print');
   if (printBtn) printBtn.addEventListener('click', () => window.print());
 
+
+  /* 左侧题型目录：随筛选隐藏无题的题型、点击跳转、滚动高亮、窄屏可收起 */
+  const side = $('.side');
+  if (side) {
+    const items = $$('.side-list li', side);
+    const targetOf = (t) => {
+      const head = heads.find((h) => h.dataset.type === t);
+      if (state.byType && head && !head.hidden) return head;
+      return probs.find((p) => p.dataset.type === t && !p.hidden) || null;
+    };
+    const sync = () => {
+      items.forEach((li) => {
+        const any = probs.some((p) => p.dataset.type === li.dataset.type && !p.hidden);
+        li.hidden = !any;
+        if (any) {
+          const n = probs.filter((p) => p.dataset.type === li.dataset.type && !p.hidden).length;
+          $('.tc', li).textContent = n;
+        }
+      });
+      spy();
+    };
+    let ticking = false;
+    function spy() {
+      ticking = false;
+      let cur = null;
+      items.forEach((li) => {
+        if (li.hidden) return;
+        const el = targetOf(li.dataset.type);
+        if (el && el.getBoundingClientRect().top <= 150) cur = li;
+      });
+      if (!cur) cur = items.find((li) => !li.hidden) || null;
+      items.forEach((li) => li.classList.toggle('on', li === cur));
+      if (cur && side.scrollHeight > side.clientHeight + 2 && getComputedStyle(side).position === 'sticky') {
+        const r = cur.getBoundingClientRect(), s = side.getBoundingClientRect();
+        if (r.top < s.top + 30 || r.bottom > s.bottom - 10) cur.scrollIntoView({ block: 'nearest' });
+      }
+    }
+    side.addEventListener('click', (e) => {
+      const a = e.target.closest('.side-list a');
+      if (!a) return;
+      const el = targetOf(a.parentElement.dataset.type);
+      if (!el) return;
+      e.preventDefault();
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+    });
+    const tgl = $('.side-tgl', side);
+    if (tgl) {
+      const narrow = window.matchMedia('(max-width: 1179px)');
+      const setCollapsed = (c) => {
+        side.classList.toggle('collapsed', c);
+        tgl.textContent = c ? '展开' : '收起';
+        tgl.setAttribute('aria-expanded', String(!c));
+      };
+      setCollapsed(narrow.matches);
+      tgl.addEventListener('click', () => setCollapsed(!side.classList.contains('collapsed')));
+    }
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
+    [tierBtns, [optExt, optBy]].flat().forEach((el) => el && el.addEventListener(el.matches('button') ? 'click' : 'change', () => setTimeout(sync, 0)));
+    setTimeout(sync, 0);
+  }
+
   apply();
   renderDone();
   if (state.allAns) setAllAnswers(true);
