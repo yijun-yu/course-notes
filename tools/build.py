@@ -778,11 +778,29 @@ def footer_html(courses, root):
         stat.append('<b>%d</b> 道题' % probs)
     if kps:
         stat.append('<b>%d</b> 个知识点' % kps)
-    return ('<footer class="foot"><section><h3>更新记录</h3><ol>%s</ol></section>'
-            '<p class="stat">%s<br>最近更新 %s</p>'
-            '<p class="fine"><span>个人整理，难免有误；遇到觉得不对的地方，请相信自己的判断。</span>'
-            '<span>宋体排印 · 公式由 KaTeX 渲染</span></p></footer>'
-            % (rows, ' · '.join(stat), log[0][0].replace('-', '/') if log else today.replace('-', '/')))
+    latest = log[0][0].replace('-', '/') if log else today.replace('-', '/')
+    ext = ' target="_blank" rel="noopener"'
+    # 更新记录在上，下面是一张宽卡片：站名、收录量，以及关于 / 链接 / 站点 / 排印四列
+    return (
+        '<footer class="foot">'
+        '<section class="log" id="log"><h3>更新记录</h3><ol>%(rows)s</ol></section>'
+        '<div class="card">'
+        '<div class="card-head"><p class="brand"><b>课程讲义</b><i>Course Notes</i></p>'
+        '<p class="stat">%(stat)s<br>最近更新 %(latest)s</p></div>'
+        '<div class="card-cols">'
+        '<nav aria-label="关于"><h4><span>01</span>关于</h4>'
+        '<p>个人整理，难免有误；遇到觉得不对的地方，请相信自己的判断。</p></nav>'
+        '<nav aria-label="链接"><h4><span>02</span>链接</h4>'
+        '<a href="https://github.com/yijun-yu"%(ext)s>GitHub<s>↗</s></a>'
+        '<a href="https://github.com/yijun-yu/course-notes"%(ext)s>讲义仓库<s>↗</s></a>'
+        '<a href="https://github.com/yijun-yu/PIM-EVA"%(ext)s>PIM-EVA<s>↗</s></a>'
+        '<span class="soon">个人网站<em>筹备中</em></span></nav>'
+        '<nav aria-label="站点"><h4><span>03</span>站点</h4>'
+        '<a href="%(root)s">书架首页</a><a href="#log">更新记录</a><a href="#">回到顶部</a></nav>'
+        '<nav aria-label="排印"><h4><span>04</span>排印</h4>'
+        '<p>宋体排印<br>公式由 KaTeX 渲染</p></nav>'
+        '</div></div></footer>'
+        % dict(rows=rows, stat=' · '.join(stat), latest=latest, ext=ext, root=root))
 
 
 def build_home(courses, site, idx_version):
