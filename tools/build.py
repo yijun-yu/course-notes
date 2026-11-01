@@ -120,8 +120,9 @@ def render_text(s):
 
 def render_inline(s):
     """行内文字（如题型名）：把 e^{iax} 这类写法当作公式，其余只做转义。"""
-    s = re.sub(r'([A-Za-z]\^\{[^}]*\})', r'$\1$', s)
+    # 先登记已经写在 $...$ 里的公式，再把剩下的 e^{iax} 之类裸写当作公式，避免二次包裹
     s = re.sub(r'\$([^$\n]+?)\$', lambda m: '\u0001%d\u0002' % M.add(m.group(1).strip(), False), s)
+    s = re.sub(r'([A-Za-z]\^\{[^}]*\})', lambda m: '\u0001%d\u0002' % M.add(m.group(1), False), s)
     return html.escape(s, quote=False)
 
 
