@@ -8,6 +8,7 @@
 用法：python3 -I tools/build.py <仓库根目录>
 """
 import base64
+import datetime
 import html
 import io
 import json
@@ -15,6 +16,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import urllib.parse
 from string import Template
 
 ROOT = pathlib.Path(sys.argv[1]).resolve()
@@ -601,17 +603,16 @@ def cn(n):
 def book_html(c, i):
     light = ' light' if c.get('light') else ''
     n = c.get('_count', 0)
-    has = ' has' if n else ''
     unit = '个知识点' if c.get('kind') == 'notes' else '题'
     title = ' title="已有 %d %s"' % (n, unit) if n else ''
-    mark = '<span class="mark" aria-hidden="true"></span><span class="sr">，已有 %d %s</span>' % (n, unit) if n else ''
+    sr = '<span class="sr">，已有 %d %s</span>' % (n, unit) if n else ''
     return (
-        '<a class="book%s%s" href="./%s/index.html"%s style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
+        '<a class="book%s" href="./%s/index.html"%s style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
         '  <span class="vol">%s</span>\n'
         '  <span class="spine"><h2>%s</h2><span class="en">%s</span></span>\n'
         '  <svg class="glyph" viewBox="0 0 40 40" aria-hidden="true">%s</svg>%s\n</a>'
-        % (light, has, esc(c['id']), title, ' '.join(map(str, c['color'])), c['spine']['w'], c['spine']['h'], i,
-           esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph'], mark))
+        % (light, esc(c['id']), title, ' '.join(map(str, c['color'])), c['spine']['w'], c['spine']['h'], i,
+           esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph'], sr))
 
 
 def letter_button(lt, i):
@@ -628,6 +629,86 @@ def letter_dialog(lt):
             '<h2 id="letter-title">%s</h2>%s<p class="sign">%s<br>%s</p>'
             '<form method="dialog"><button class="close">合上</button></form></article></dialog>'
             % (esc(lt['title']), paras, esc(lt['sign']), esc(lt['date'])))
+
+
+def cn_n(n):
+    """1–99 的中文数字。"""
+    if n <= 10:
+        return CN[n]
+    if n < 20:
+        return '十' + CN[n - 10]
+    return CN[n // 10] + '十' + (CN[n % 10] if n % 10 else '')
+
+
+def cn_date(d):
+    return '%s年%s月%s日' % (''.join('〇一二三四五六七八九'[int(ch)] for ch in str(d.year)), cn_n(d.month), cn_n(d.day))
+
+
+def emblem_html(courses, links=True):
+    """缩略书架：每门课一条小书脊，高矮、颜色取自真实书脊，按辑分组，站在一条细线上。"""
+    groups = {}
+    for c in courses:
+        groups.setdefault(c['series'], []).append(c)
+    out = []
+    for sno in sorted(groups):
+        items = []
+        for c in sorted(groups[sno], key=lambda c: c['order']):
+            st = '--c:%s;--w:%dpx;--h:%dpx' % (' '.join(map(str, c['color'])), round(c['spine']['w'] / 20),
+                                               round(12 + (c['spine']['h'] - 400) * 0.3))
+            if links:
+                label = esc(c['volume'] + ' ' + c['title'])
+                items.append('<a href="./%s/index.html" style="%s" title="%s" aria-label="%s"></a>'
+                             % (esc(c['id']), st, label, label))
+            else:
+                items.append('<i style="%s"></i>' % st)
+        out.append('<span class="grp">%s</span>' % ''.join(items))
+    if links:
+        return '<nav class="emblem" aria-label="全部课程">%s</nav>' % ''.join(out)
+    return '<span class="emblem" aria-hidden="true">%s</span>' % ''.join(out)
+
+
+def favicon_svg(courses):
+    bw, gap, ggap = 4.6, 2.2, 3.0
+    groups = {}
+    for c in courses:
+        groups.setdefault(c['series'], []).append(c)
+    n = len(courses)
+    total = n * bw + (n - len(groups)) * gap + (len(groups) - 1) * ggap
+    x, rects = (64 - total) / 2, []
+    for k, sno in enumerate(sorted(groups)):
+        if k:
+            x += ggap - gap
+        for c in sorted(groups[sno], key=lambda c: c['order']):
+            h = 18 + (c['spine']['h'] - 400) * 0.32
+            rects.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="1" fill="#%02x%02x%02x"/>'
+                         % (x, 52 - h, bw, h, *c['color']))
+            x += bw + gap
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#14110f"/>%s</svg>'
+            % ''.join(rects))
+
+
+def favicon_uri(courses):
+    svg = favicon_svg(courses)
+    (ROOT / 'assets' / 'favicon.svg').write_text(svg + '\n', encoding='utf8')
+    return 'data:image/svg+xml,' + urllib.parse.quote(svg)
+
+
+def footer_html(courses, site):
+    """页脚做成书的版权页：初版与修订日期、收录量、排印说明。"""
+    y, m = site.get('first', '2026-10').split('-')
+    first = '%s年%s月' % (''.join('〇一二三四五六七八九'[int(ch)] for ch in y), cn_n(int(m)))
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+    probs = sum(c.get('_count', 0) for c in courses if c.get('kind') != 'notes')
+    kps = sum(c.get('_count', 0) for c in courses if c.get('kind') == 'notes')
+    parts = ['共%s卷' % cn_n(len(courses))]
+    if probs:
+        parts.append('题目 %d 道' % probs)
+    if kps:
+        parts.append('知识点 %d 个' % kps)
+    return ('<footer>%s<div class="colophon"><b>%s</b>　%s<br>初版 %s　修订 %s<br>%s<br>'
+            '<span class="fine">宋体排印，公式由 KaTeX 渲染。个人整理，难免有误。</span></div></footer>'
+            % (emblem_html(courses, links=False), esc(site['title']), esc(site['en']), first, cn_date(today),
+               '　'.join(parts)))
 
 
 def build_home(courses, site):
@@ -659,10 +740,12 @@ def build_home(courses, site):
             '<div class="plank" aria-hidden="true"></div>\n</section>'
             % (esc(meta['no']), esc(meta['name']), esc(rng), '\n'.join(books)))
     ordered = sorted(courses, key=lambda c: c['order'])
-    meta_html = '共%s辑<br><b>%s — %s</b>' % (cn(len(by_series)), esc(ordered[0]['volume']), esc(ordered[-1]['volume']))
+    meta_html = emblem_html(ordered) + '<p class="meta-t">共%s辑 · <b>%s至%s</b></p>' % (
+        cn(len(by_series)), esc(ordered[0]['volume']), esc(ordered[-1]['volume']))
     tpl = Template((TOOLS / 'index.template.html').read_text(encoding='utf8'))
     dialog = letter_dialog(site['letter']) if site.get('letter') else ''
-    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections), LETTER_DIALOG=dialog)
+    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections), LETTER_DIALOG=dialog,
+                          FOOTER=footer_html(ordered, site), FAVICON=favicon_uri(ordered))
 
     # 首页保持单文件：字体以 base64 内嵌（宋体按首页用到的字截取）
     visible = html.unescape(re.sub(r'<style>.*?</style>|<[^>]+>', '', page, flags=re.S))
