@@ -1,0 +1,19 @@
+{
+  "id": "computer-organization",
+  "order": 7,
+  "series": 3,
+  "volume": "卷七",
+  "title": "计算机组成",
+  "en": "Computer Organization & Design",
+  "color": [
+    58,
+    72,
+    88
+  ],
+  "spine": {
+    "w": 140,
+    "h": 448
+  },
+  "glyph": "<path d=\"M12 12H28V28H12Z\"/><path class=\"faint\" d=\"M16 16H24V24H16Z\"/><path d=\"M16 6V12M20 6V12M24 6V12M16 28V34M20 28V34M24 28V34M6 16H12M6 20H12M6 24H12M28 16H34M28 20H34M28 24H34\"/>",
+  "chapters": []
+}
