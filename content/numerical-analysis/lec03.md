@@ -1,6 +1,6 @@
 :::exam 本讲在往年真题里
 - **2025–26 第 4 题（10 分）**：给定向量序列 $\mathbf x^{(k)}=(e^{-k}\cos k,\ k\sin(1/k),\ 3+k^{-2})^T$，证明收敛并求极限。→ 3.2。
-- **2025–26 第 7 题（10 分）**：非线性方程组，以 $\mathbf x^{(0)}=(0,0)^T$ 为初值做一次牛顿迭代。→ 3.4。⚠️ **这道题在初值处雅可比矩阵奇异**，细节见「真题精解」第 1 题。
+- **2025–26 第 7 题（10 分）**：非线性方程组，以 $\mathbf x^{(0)}=(0,0)^T$ 为初值做一次牛顿迭代。→ 3.4。⚠️ **这道题在初值处雅可比矩阵奇异**（疑为出题笔误），细节见「真题精解」第 1 题。
 - 本讲的向量范数与 Cauchy–Schwarz 不等式是 Lec 5 的基础：2025–26 第 5(b) 题 $\lVert A\mathbf x\rVert_2\le\lVert A\rVert_F\lVert\mathbf x\rVert_2$ 就是用 Cauchy–Schwarz 证的（3.1）。
 - 2022–23 到 2024–25 的回忆版里没有出现方程组的题。
 - 英文术语：vector norm、$L_1/L_2/L_\infty$ norm、converge with respect to a norm、fixed point of $\mathbf G$、coordinate functions、Jacobian matrix、Newton's method for nonlinear systems、gradient descent / steepest descent、line search。
@@ -448,7 +448,8 @@ $$\mathbf y=\frac{0.25}{1.0625}(-0.25,\ 1)^T=\Big(-\frac1{17},\ \frac4{17}\Big)^
 程序算得 $\det J(\mathbf x^{(0)})=0$，矩阵秩为 1；$J\mathbf y=-\mathbf F$ 的通解如上，最小范数解 $(-1/17,\,4/17)$ 与伪逆（`lstsq`）结果一致。**这一点说明 $\mathbf x^{(0)}=(0,0)^T$ 是个"坏初值"**：从 $(10^{-3},0)^T$ 出发第一步是 $\mathbf y=(-0.0005,\ 0.2501)^T$，从 $(0,10^{-3})^T$ 出发却是 $(-0.998,\ -0.0005)^T$，初值的微小变化导致完全不同的步子。
 
 #### 变形与说明
-- **答题写法**：把 $\mathbf F$、$J$、代入值、$\det J=0$、牛顿方程的无穷多解都写出来，明确指出标准牛顿法此处无法确定 $\mathbf x^{(1)}$，再给出最小范数解作为补充。**出题人的标准答案我没有，不确定评分时要的是"指出奇异"还是别的写法，建议和老师给的答案核对。**
+- **这道题的初值大概率是出题时写错了**（据同学反馈）。这里保持原题不改，按题面如实作答。
+- **万一考试遇到类似的**：把 $\mathbf F$、$J$、代入值、$\det J=0$、牛顿方程的无穷多解都写出来，明确指出标准牛顿法此处无法确定 $\mathbf x^{(1)}$，再给出最小范数解作为补充。这样无论标准答案是哪种写法，步骤都是完整、有据的。
 - **如果初值换成 $(0.1,\,0.1)^T$**（$J$ 可逆，可以演示完整一步）：
   $$\mathbf F=\begin{pmatrix}5(0.01)-0.01\\0.1-0.25(\sin0.1+\cos0.1)\end{pmatrix}=\begin{pmatrix}0.04\\-0.173709\end{pmatrix},\qquad J=\begin{pmatrix}1&-0.2\\-0.248751&1.024958\end{pmatrix},$$
   $\det J=1.024958-0.049750=0.975208$。解 $J\mathbf y=-\mathbf F=(-0.04,\ 0.173709)^T$（Cramer 法则）：
