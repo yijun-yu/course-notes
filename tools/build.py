@@ -475,7 +475,9 @@ def notes_page(course, ch, notes, next_ch):
     # 不带编号的 ##（如「真题精解」）照常进目录，但不计入知识点数
     for i, k in enumerate(kps):
         k['slug'] = k['no'].replace('.', '-') if k['no'] else 'x%d' % i
-    n_kp = sum(1 for k in kps if k['no'])
+    methods = ch.get('_kind') == 'methods'
+    n_kp = len(kps) if methods else sum(1 for k in kps if k['no'])
+    unit = '个题型' if methods else '个知识点'
     toc = ''.join('<li%s><a href="#kp-%s"><span class="kno">%s</span><span class="kt">%s</span>'
                   '<span class="ken">%s</span></a></li>'
                   % ('' if k['no'] else ' class="extra"', esc(k['slug']), esc(k['no'] or '◆'),
@@ -494,53 +496,105 @@ def notes_page(course, ch, notes, next_ch):
              if next_ch else '<span></span>')
     en = '<p class="en">%s</p>' % esc(ch['en']) if ch.get('en') else ''
     inner = (
-        '<header class="head"><p class="kicker">%s</p><h1>%s</h1>%s<p class="count">%d 个知识点</p></header>\n'
+        '<header class="head"><p class="kicker">%s</p><h1>%s</h1>%s<p class="count">%d %s</p></header>\n'
         '%s\n<nav class="kp-toc" aria-label="本讲知识点"><ol>%s</ol></nav>\n'
         '<div class="intro">%s</div>\n<main class="notes-body">\n%s</main>\n<footer class="pager">%s%s</footer>'
-        % (esc(ch['no']), esc(ch['title']), en, n_kp, bar, toc,
+        % (esc(ch['no']), esc(ch['title']), en, n_kp, unit, bar, toc,
            notes['intro'], secs, left, right))
     return PAGE.substitute(
         **page_assets(), rail=rail_html('../', chapter_path(course, ch)),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
-        desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], n_kp),
+        desc='%s %s %s，共 %d %s。' % (course['title'], ch['no'], ch['title'], n_kp, unit),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
         bodyclass='notes', course=course['id'], chapter=ch['id'], inner=inner)
 
 
-def course_page(course, counts):
-    notes = course.get('kind') == 'notes'
-    unit = '个知识点' if notes else '题'
+PART_TITLES = {'essay': '学习心得', 'notes': '讲义', 'problems': '题集', 'methods': '方法总结', 'links': '资源'}
+PART_UNITS = {'problems': '题', 'notes': '个知识点', 'methods': '个题型'}
+PART_WHAT = {'problems': '章', 'notes': '讲', 'methods': '篇'}
+
+
+def normalize_course(c):
+    """一本书由若干部分组成：学习心得、讲义、题集、方法总结、资源，每门课按需要取舍。
+    没写 parts 的旧配置按 kind + chapters 当作只有一部分。"""
+    if 'parts' not in c:
+        c['parts'] = [{'kind': c.get('kind', 'problems'), 'chapters': c.get('chapters', [])}]
+    chs = []
+    for p in c['parts']:
+        if p['kind'] not in PART_TITLES:
+            sys.exit('%s：未知的部分类型 %s' % (c['id'], p['kind']))
+        p.setdefault('title', PART_TITLES[p['kind']])
+        for ch in p.get('chapters', []):
+            ch['_kind'] = p['kind']
+            ch.setdefault('no', '')
+            chs.append(ch)
+    c['chapters'] = chs
+
+
+def toc_html(part, counts):
+    k = part['kind']
     avail_rows, soon_rows = [], []
-    for ch in course['chapters']:
+    for ch in part.get('chapters', []):
         n = counts.get(ch['id'])
         head = '<span class="no">%s</span><span class="t">%s</span><span class="dots"></span>' % (
             esc(ch['no']), esc(ch['title']))
         if n:
             avail_rows.append('<li><a href="%s.html">%s<span class="n">%d %s</span></a></li>'
-                              % (ch['id'], head, n, unit))
+                              % (ch['id'], head, n, PART_UNITS[k]))
         else:
             soon_rows.append('<li class="soon"><div class="row">%s<span class="n">待续</span></div></li>' % head)
-    total = sum(counts.values())
-    if notes:
-        status = '已收录 %d 讲 · %d 个知识点' % (len(counts), total) if total else '讲义整理中，敬请期待'
-    else:
-        status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
-    toc = ''
+    out = ''
     if avail_rows:
-        toc += '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(avail_rows)
+        out += '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(avail_rows)
     if soon_rows:
-        what = '讲' if notes else '章'
-        label = '其余 %d %s整理中' % (len(soon_rows), what) if avail_rows else '%s整理中' % ('讲义' if notes else '章节')
-        toc += ('\n<details class="soon-group"%s><summary>%s</summary>\n<ol class="toc">\n%s\n</ol>\n</details>'
+        label = ('其余 %d %s整理中' % (len(soon_rows), PART_WHAT[k])) if avail_rows else '%s整理中' % part['title']
+        out += ('\n<details class="soon-group"%s><summary>%s</summary>\n<ol class="toc">\n%s\n</ol>\n</details>'
                 % ('' if avail_rows else ' open', label, '\n'.join(soon_rows)))
+    if not out:
+        out = '<p class="todo">整理中</p>'
+    return out
+
+
+def links_html(part):
+    rows = []
+    for it in part.get('items', []):
+        host = urllib.parse.urlparse(it['url']).netloc
+        rows.append('<li><a href="%s" target="_blank" rel="noopener"><span class="t">%s</span>'
+                    '<span class="d">%s</span><span class="host">%s ↗</span></a></li>'
+                    % (esc(it['url']), esc(it['title']), esc(it.get('note', '')), esc(host)))
+    return '<ul class="links">%s</ul>' % ''.join(rows) if rows else '<p class="todo">整理中</p>'
+
+
+def course_page(course, counts):
+    parts = course['parts']
+    multi = len(parts) > 1
+    blocks, stat = [], []
+    for part in parts:
+        k = part['kind']
+        if k == 'essay':
+            body = course.get('_essay')
+            inner = '<div class="essay-body">%s</div>' % body if body else '<p class="todo">待写</p>'
+        elif k == 'links':
+            inner = links_html(part)
+            if part.get('items'):
+                stat.append('%d 个资源' % len(part['items']))
+        else:
+            inner = toc_html(part, counts)
+            got = [counts[ch['id']] for ch in part.get('chapters', []) if counts.get(ch['id'])]
+            if got:
+                stat.append(('%d 讲 · %d 个知识点' % (len(got), sum(got))) if k == 'notes'
+                            else '%d %s' % (sum(got), PART_UNITS[k]))
+        head = '<h2 class="part-h">%s</h2>' % esc(part['title']) if multi else ''
+        blocks.append('<section class="part part-%s">%s%s</section>' % (k, head, inner))
+    status = '已收录 ' + ' · '.join(stat) if stat else '整理中，敬请期待'
     inner = (
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="en">%s</p>'
         '<p class="count">%s</p></header>%s'
-        % (esc(course['volume']), esc(course['title']), esc(course['en']), status, toc))
+        % (esc(course['volume']), esc(course['title']), esc(course['en']), status, '\n'.join(blocks)))
     return PAGE.substitute(
         title='%s · 课程讲义' % course['title'], **page_assets(),
         rail=rail_html('../', '<span class="now">%s %s</span>' % (esc(course['volume']), esc(course['title']))),
-        desc='%s 讲义目录。' % course['title'],
+        desc='%s 目录。' % course['title'],
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
         bodyclass='course', course=course['id'], chapter='index', inner=inner)
 
@@ -622,10 +676,10 @@ def cn(n):
 
 def book_html(c, i):
     light = ' light' if c.get('light') else ''
-    n = c.get('_count', 0)
-    unit = '个知识点' if c.get('kind') == 'notes' else '题'
-    title = ' title="已有 %d %s"' % (n, unit) if n else ''
-    sr = '<span class="sr">，已有 %d %s</span>' % (n, unit) if n else ''
+    have = '、'.join(x for x in ['%d 题' % c['_probs'] if c.get('_probs') else '',
+                                 '%d 个知识点' % c['_kps'] if c.get('_kps') else ''] if x)
+    title = ' title="已有 %s"' % have if have else ''
+    sr = '<span class="sr">，已有 %s</span>' % have if have else ''
     return (
         '<a class="book%s" href="./%s/index.html"%s style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
         '  <span class="vol">%s</span>\n'
@@ -717,8 +771,8 @@ def footer_html(courses, root):
         '<a href="%s%s/%s.html">%s · %s %s</a></li>'
         % (d, d[5:].replace('-', '/'), ' '.join(map(str, c['color'])), verb, root, esc(c['id']), esc(ch['id']),
            esc(c['title']), esc(ch['no']), esc(ch['title'])) for d, _, verb, c, ch in log[:6])
-    probs = sum(c.get('_count', 0) for c in courses if c.get('kind') != 'notes')
-    kps = sum(c.get('_count', 0) for c in courses if c.get('kind') == 'notes')
+    probs = sum(c.get('_probs', 0) for c in courses)
+    kps = sum(c.get('_kps', 0) for c in courses)
     stat = ['<b>%d</b> 门课' % len(courses)]
     if probs:
         stat.append('<b>%d</b> 道题' % probs)
@@ -797,11 +851,19 @@ def index_course(index, course, avail, data):
     c = ' '.join(map(str, course['color']))
     cid = course['id']
     index.append({'k': '课程', 't': course['title'], 'en': course['en'], 's': course['volume'], 'u': cid + '/', 'c': c})
+    for part in course['parts']:
+        for it in part.get('items', []):
+            index.append({'k': '资源', 't': it['title'], 'en': it.get('note', ''), 's': course['title'], 'u': it['url'], 'c': c})
     for ch in avail:
         page = '%s/%s.html' % (cid, ch['id'])
         index.append({'k': '章', 't': ch['title'], 'en': ch.get('en', ''), 's': '%s · %s' % (course['title'], ch['no']),
                       'u': page, 'c': c})
-        if course.get('kind') == 'notes':
+        if ch['_kind'] == 'methods':
+            for i, k in enumerate(data[ch['id']]['kps']):
+                slug = k['no'].replace('.', '-') if k['no'] else 'x%d' % i
+                index.append({'k': '题型方法', 't': plain(k['zh']), 'en': k['en'], 's': course['title'],
+                              'u': '%s#kp-%s' % (page, slug), 'c': c})
+        elif ch['_kind'] == 'notes':
             for i, k in enumerate(data[ch['id']]['kps']):
                 if k['no']:
                     index.append({'k': '知识点', 't': plain(k['zh']), 'en': k['en'],
@@ -831,44 +893,45 @@ def main():
     serif_text = [site['title'], '待续', '卷一二三四五六七八九十', '第章综合']
     summary = []
     for course in courses:
+        normalize_course(course)
         cdir = course['_dir']
         serif_text += [course['title'], course['volume']]
-        chapters = course['chapters']
         data = {}
-        if course.get('kind') == 'notes':
-            for ch in chapters:
-                serif_text += [ch['no'], ch['title']]
-                f = cdir / (ch['id'] + '.md')
-                if f.exists():
-                    data[ch['id']] = parse_notes(f)
-                    serif_text += [k['zh'] for k in data[ch['id']]['kps']]
-            avail = [ch for ch in chapters if ch['id'] in data]
-            index_course(index, course, avail, data)
-            for i, ch in enumerate(avail):
-                nxt = avail[i + 1] if i + 1 < len(avail) else None
-                pages[ROOT / course['id'] / (ch['id'] + '.html')] = notes_page(course, ch, data[ch['id']], nxt)
-                summary.append('%s %s：%d 个知识点' % (course['id'], ch['id'],
-                                                     sum(1 for k in data[ch['id']]['kps'] if k['no'])))
-            course['_count'] = sum(sum(1 for x in v['kps'] if x['no']) for v in data.values())
-            pages[ROOT / course['id'] / 'index.html'] = course_page(
-                course, {k: sum(1 for x in v['kps'] if x['no']) for k, v in data.items()})
-            continue
-        for ch in chapters:
+        for ch in course['chapters']:
             serif_text += [ch['no'], ch['title']]
             f = cdir / (ch['id'] + '.md')
             if f.exists():
-                data[ch['id']] = parse_chapter(f)
-        course['_count'] = sum(len(v) for v in data.values())
-        avail = [ch for ch in chapters if ch['id'] in data]
-        index_course(index, course, avail, data)
-        for i, ch in enumerate(avail):
-            nxt = avail[i + 1] if i + 1 < len(avail) else None
-            pages[ROOT / course['id'] / (ch['id'] + '.html')] = chapter_page(course, ch, data[ch['id']], None, nxt)
-            tiers = {}
-            for p in data[ch['id']]:
-                tiers[p['tier']] = tiers.get(p['tier'], 0) + 1
-            summary.append('%s %s：%d 题 %s' % (course['id'], ch['id'], len(data[ch['id']]), tiers))
-        pages[ROOT / course['id'] / 'index.html'] = course_page(course, {k: len(v) for k, v in data.items()})
+                if ch['_kind'] == 'problems':
+                    data[ch['id']] = parse_chapter(f)
+                else:
+                    data[ch['id']] = parse_notes(f)
+                    serif_text += [k['zh'] for k in data[ch['id']]['kps']]
+        essay = cdir / 'essay.md'
+        if essay.exists():
+            course['_essay'] = render_blocks(essay.read_text(encoding='utf8'), essay.name)
+        counts, course['_probs'], course['_kps'] = {}, 0, 0
+        for part in course['parts']:
+            avail = [ch for ch in part.get('chapters', []) if ch['id'] in data]
+            for i, ch in enumerate(avail):
+                nxt = avail[i + 1] if i + 1 < len(avail) else None
+                d, out = data[ch['id']], ROOT / course['id'] / (ch['id'] + '.html')
+                if part['kind'] == 'problems':
+                    pages[out] = chapter_page(course, ch, d, None, nxt)
+                    counts[ch['id']] = len(d)
+                    course['_probs'] += len(d)
+                    tiers = {}
+                    for p in d:
+                        tiers[p['tier']] = tiers.get(p['tier'], 0) + 1
+                    summary.append('%s %s：%d 题 %s' % (course['id'], ch['id'], len(d), tiers))
+                else:
+                    pages[out] = notes_page(course, ch, d, nxt)
+                    n = len(d['kps']) if part['kind'] == 'methods' else sum(1 for x in d['kps'] if x['no'])
+                    counts[ch['id']] = n
+                    if part['kind'] == 'notes':
+                        course['_kps'] += n
+                    summary.append('%s %s：%d %s' % (course['id'], ch['id'], n, PART_UNITS[part['kind']]))
+        index_course(index, course, [ch for ch in course['chapters'] if ch['id'] in data], data)
+        pages[ROOT / course['id'] / 'index.html'] = course_page(course, counts)
 
     idx_js = 'window.SEARCH_INDEX=' + json.dumps(index, ensure_ascii=False, separators=(',', ':')) + ';\n'
     (ROOT / 'assets' / 'search-index.js').write_text(idx_js, encoding='utf8')

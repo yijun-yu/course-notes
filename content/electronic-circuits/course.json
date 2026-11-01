@@ -15,5 +15,24 @@
     "h": 476
   },
   "glyph": "<circle class=\"dot\" cx=\"4\" cy=\"14\" r=\"1.8\"/><circle class=\"dot\" cx=\"36\" cy=\"14\" r=\"1.8\"/><path d=\"M4 14H11L13 9L17 19L21 9L25 19L27 14H36\"/><path class=\"faint\" d=\"M8 14V28M32 14V28M8 28H17M23 28H32M17 23V33M23 23V33\"/>",
-  "chapters": []
+  "parts": [
+    {
+      "kind": "essay"
+    },
+    {
+      "kind": "links",
+      "items": [
+        {
+          "title": "EC2024 课程网站",
+          "url": "https://bc0403.github.io/EC2024/",
+          "note": "老师制作：电路与模电共 12 章，配习题与参考答案"
+        }
+      ]
+    },
+    {
+      "kind": "methods",
+      "title": "题型方法总结",
+      "chapters": []
+    }
+  ]
 }

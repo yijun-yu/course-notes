@@ -46,6 +46,7 @@
     const words = q.split(/\s+/).filter(Boolean);   // 「留数 积分」：每个词都出现即可
     return words.length > 1 && words.every((w) => (t + ' ' + rest).includes(w)) ? 1 : 0;
   };
+  const href = (u) => (/^https?:/.test(u) ? u : root + u);
   const render = () => {
     const q = input.value.trim();
     const all = window.SEARCH_INDEX || [];
@@ -53,7 +54,7 @@
       .sort((a, b) => b[0] - a[0] || a[1] - b[1]).slice(0, 50).map((x) => x[2]);
     sel = 0;
     list.innerHTML = hits.length
-      ? hits.map((it, i) => '<li role="option"' + (i ? '' : ' class="sel"') + '><a href="' + esc(root + it.u)
+      ? hits.map((it, i) => '<li role="option"' + (i ? '' : ' class="sel"') + '><a href="' + esc(href(it.u))
         + '" style="--c:' + it.c + '"><i class="dot"></i><span class="t">' + mark(it.t, q) + '</span><span class="s">'
         + esc(it.s) + (it.k === '课程' ? '' : ' · ' + esc(it.k)) + '</span></a></li>').join('')
       : '<li class="empty">没有找到「' + esc(q) + '」</li>';
@@ -81,7 +82,7 @@
   input.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
-    else if (e.key === 'Enter' && hits[sel]) { e.preventDefault(); close(); location.href = root + hits[sel].u; }
+    else if (e.key === 'Enter' && hits[sel]) { e.preventDefault(); close(); location.href = href(hits[sel].u); }
     else if (e.key === 'Escape') { e.preventDefault(); close(); }
   });
   list.addEventListener('click', (e) => { if (e.target.closest('a')) close(); });

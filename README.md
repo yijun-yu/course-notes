@@ -47,6 +47,22 @@ python3 -I tools/build.py .
 - 「待续」位置总是放在最后一辑的末尾。
 - 页脚的「更新记录」取自 git 历史：每个章节文件最近一次提交的日期，没提交过的改动记为当天。所以请先提交内容、再构建，日期才准确。
 
+## 一本书的几个部分
+
+每门课按自己的学法，从下面几部分里挑，在 `course.json` 里写 `parts`（按顺序显示在目录页）：
+
+```json
+"parts": [
+  {"kind": "essay"},                                   学习心得：写在 content/<课程>/essay.md，没写时显示「待写」
+  {"kind": "notes",    "chapters": [...]},             讲义（AI 整理的知识点，格式见下）
+  {"kind": "problems", "chapters": [...]},             题集（Astra 输出的题目块）
+  {"kind": "methods",  "title": "题型方法总结", "chapters": [...]},   自己写的方法总结，格式同讲义，每个 ## 是一个题型
+  {"kind": "links",    "items": [{"title": "…", "url": "https://…", "note": "…"}]}   资源：课件、老师的网站、参考书
+]
+```
+
+每部分都可以用 `"title"` 改显示名。没写 `parts` 的旧配置仍按 `kind` + `chapters` 当作只有一部分。章节 `id` 在整本书里不能重复。
+
 ## 讲义（知识点）格式
 
 `course.json` 里写 `"kind": "notes"` 的课程（目前是数值分析），章节文件按讲义格式解析，每章生成一页知识点讲义：

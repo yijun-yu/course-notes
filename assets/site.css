@@ -47,6 +47,23 @@ h1{font-family:var(--serif);font-weight:500;font-size:clamp(38px,6.4vw,64px);lin
 .toc .soon .t,.toc .soon .no{opacity:.38}
 .toc .soon .n{color:var(--ink-3)}
 
+/* ---------- 一本书的几个部分：学习心得、讲义、题集、方法总结、资源 ---------- */
+.part + .part{margin-top:clamp(36px,6vh,56px)}
+.part-h{display:flex;align-items:center;gap:12px;margin-bottom:6px;font:500 13px/1 var(--sans);letter-spacing:.04em;color:rgb(var(--ca))}
+.part-h::after{content:"";flex:1;height:1px;background:var(--rule)}
+.part-h + .toc{border-top:0}
+.todo{padding:16px 4px;font-size:14px;color:var(--ink-3)}
+.essay-body{padding:10px 4px 0;font-size:16px;line-height:1.95;color:var(--ink)}
+.essay-body p + p{margin-top:.9em}
+.links{list-style:none}
+.links li{border-bottom:1px solid var(--rule)}
+.links a{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:20px 4px;text-decoration:none;transition:background .4s var(--ease),padding .4s var(--ease)}
+.links a:hover{background:rgb(var(--c) / .16);padding-left:14px}
+.links .t{font-family:var(--serif);font-size:20px;color:var(--paper)}
+.links .d{font-size:13px;color:var(--ink-2)}
+.links .host{margin-left:auto;font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+@media (max-width:720px){.links .host{margin-left:0;flex-basis:100%}}
+
 /* ---------- 工具条 ---------- */
 .bar{
   position:sticky;top:64px;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;
