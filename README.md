@@ -42,6 +42,23 @@ python3 -I tools/build.py .
   - `chapters`：章节列表，`id` 与 `content/<课程>/<章>.md` 的文件名对应
 - 「待续」位置总是放在最后一辑的末尾。
 
+## 讲义（知识点）格式
+
+`course.json` 里写 `"kind": "notes"` 的课程（目前是数值分析），章节文件按讲义格式解析，每章生成一页知识点讲义：
+
+```
+## 1.1 中文标题 | English Title      一个知识点（编号 + 中文 | 英文）
+:::quick … :::                      速查框（考场只看这一块）
+:::proof ★ 标题 … :::               证明，默认折叠；★ 必读、☆ 选读
+:::example 标题 … :::               例题
+:::pitfall … :::                    易错点
+:::exam 标题 … :::                  真题考点
+:::note 标题 … :::                  补充
+#### 小标题、- 列表（缩进两格可嵌套一层）、1. 有序列表、| 表格 |、$..$、$$..$$、**粗体**、`代码`
+```
+
+页面上有「展开全部证明」「只看 ★ 证明」两个开关；打印时证明自动全部展开。
+
 ## 构建依赖
 
 Python 3、`fonttools`、Node.js（用于 KaTeX 预渲染；脚本优先使用 `node_modules` 中的 KaTeX，否则读环境变量 `KATEX_PATH`）。字体用 Noto Serif CJK（宋体）、Inter、TeX Gyre Pagella，均为免费开源。

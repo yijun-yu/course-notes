@@ -144,3 +144,61 @@
   window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => measure(document), 150); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => measure(document));
 })();
+
+/* 讲义页交互：展开全部证明、只看 ★ 证明、打印时展开全部证明、过宽公式提示。 */
+(() => {
+  'use strict';
+  const body = document.body;
+  if (!body.classList.contains('notes')) return;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const key = 'cn:' + body.dataset.course + ':notes:';
+  const load = (k, d) => {
+    try { const v = localStorage.getItem(key + k); return v === null ? d : JSON.parse(v); }
+    catch (e) { return d; }
+  };
+  const save = (k, v) => { try { localStorage.setItem(key + k, JSON.stringify(v)); } catch (e) {} };
+
+  const proofs = $$('details.proof');
+  const optAll = $('#opt-proofs');
+  const optMust = $('#opt-only-must');
+  const state = { all: load('allproofs', false), must: load('onlymust', false) };
+
+  function measure(root) {
+    $$('.disp', root).forEach((d) => {
+      if (!d._wired) {
+        d._wired = true;
+        d.addEventListener('scroll', () => {
+          d.classList.toggle('end', d.scrollLeft + d.clientWidth >= d.scrollWidth - 2);
+        }, { passive: true });
+      }
+      const over = d.scrollWidth > d.clientWidth + 1;
+      d.classList.toggle('ov', over);
+      d.classList.toggle('end', over && d.scrollLeft + d.clientWidth >= d.scrollWidth - 2);
+    });
+  }
+  function apply() {
+    if (optAll) optAll.checked = state.all;
+    if (optMust) optMust.checked = state.must;
+    body.classList.toggle('only-must', state.must);
+    proofs.forEach((d) => { d.open = state.all; });
+    measure(document);
+  }
+  if (optAll) optAll.addEventListener('change', () => { state.all = optAll.checked; save('allproofs', state.all); apply(); });
+  if (optMust) optMust.addEventListener('change', () => { state.must = optMust.checked; save('onlymust', state.must); apply(); });
+  const printBtn = $('#btn-print');
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+  let before = [];
+  window.addEventListener('beforeprint', () => {
+    before = proofs.map((d) => d.open);
+    proofs.forEach((d) => { d.open = true; });
+  });
+  window.addEventListener('afterprint', () => { proofs.forEach((d, i) => { d.open = before[i]; }); });
+
+  apply();
+  document.addEventListener('toggle', (e) => measure(e.target), true);
+  let rt = 0;
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => measure(document), 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => measure(document));
+})();

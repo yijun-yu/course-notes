@@ -15,5 +15,79 @@
     "h": 446
   },
   "glyph": "<path class=\"faint\" d=\"M3 20H37\"/><path d=\"M3 20L8 7L13 32L18 11L22 27L26 15L29 23.5L32 18L34.5 21L37 20\"/>",
-  "chapters": []
+  "chapters": [
+    {
+      "id": "lec01",
+      "no": "Lec 1",
+      "title": "误差与计算机算术",
+      "en": "Computer Arithmetic & Errors"
+    },
+    {
+      "id": "lec02",
+      "no": "Lec 2",
+      "title": "一元方程求根",
+      "en": "Solutions of Equations in One Variable"
+    },
+    {
+      "id": "lec03",
+      "no": "Lec 3",
+      "title": "非线性方程组",
+      "en": "Solutions of Nonlinear Systems"
+    },
+    {
+      "id": "lec04",
+      "no": "Lec 4",
+      "title": "线性方程组的直接法",
+      "en": "Direct Methods for Linear Systems"
+    },
+    {
+      "id": "lec05",
+      "no": "Lec 5",
+      "title": "范数、迭代法与条件数",
+      "en": "Norms, Iterative Techniques & Conditioning"
+    },
+    {
+      "id": "lec06",
+      "no": "Lec 6",
+      "title": "特征值近似",
+      "en": "Approximating Eigenvalues"
+    },
+    {
+      "id": "lec07",
+      "no": "Lec 7",
+      "title": "插值 I：Lagrange 与 Neville",
+      "en": "Interpolation I: Lagrange & Neville"
+    },
+    {
+      "id": "lec08",
+      "no": "Lec 8",
+      "title": "插值 II：差商与三次样条",
+      "en": "Interpolation II: Divided Differences & Cubic Splines"
+    },
+    {
+      "id": "lec09",
+      "no": "Lec 9",
+      "title": "函数逼近",
+      "en": "Approximation Theory"
+    },
+    {
+      "id": "lec10",
+      "no": "Lec 10",
+      "title": "数值微分",
+      "en": "Numerical Differentiation"
+    },
+    {
+      "id": "lec11",
+      "no": "Lec 11",
+      "title": "数值积分",
+      "en": "Numerical Integration"
+    },
+    {
+      "id": "lec12",
+      "no": "Lec 12",
+      "title": "常微分方程初值问题",
+      "en": "Initial-Value Problems for ODEs"
+    }
+  ],
+  "kind": "notes"
 }
