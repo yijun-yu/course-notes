@@ -752,13 +752,12 @@ def build_home(courses, site, idx_version):
                 '<div class="slot" aria-label="待续" style="--d:%d"><span class="vol">%02d — ∞</span>'
                 '<span class="spine"><h2>待续</h2><span class="en">More volumes to come</span></span>'
                 '<span></span></div>' % (i, len(courses) + 1))
-        rng = cs[0]['volume'] if len(cs) == 1 else '%s — %s' % (cs[0]['volume'], cs[-1]['volume'])
+        # 辑名不再是浮在书架上方的网页标题，而是插在层板前沿铜框里的一张小卡片
         sections.append(
-            '<section class="series">\n'
-            '<h2 class="series-head"><span class="sno">%s</span><span class="sname">%s</span>'
-            '<span class="srange">%s</span></h2>\n<div class="shelf">\n%s\n</div>\n'
-            '<div class="plank" aria-hidden="true"></div>\n</section>'
-            % (esc(meta['no']), esc(meta['name']), esc(rng), '\n'.join(books)))
+            '<section class="series" aria-labelledby="s%d">\n<div class="shelf">\n%s\n</div>\n'
+            '<div class="plank"><h2 class="tag" id="s%d"><span class="sno">%s</span><span class="sname">%s</span></h2></div>\n'
+            '</section>'
+            % (sno, '\n'.join(books), sno, esc(meta['no']), esc(meta['name'])))
     ordered = sorted(courses, key=lambda c: c['order'])
     tpl = Template((TOOLS / 'index.template.html').read_text(encoding='utf8'))
     dialog = letter_dialog(site['letter']) if site.get('letter') else ''
