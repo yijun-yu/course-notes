@@ -8,6 +8,9 @@
 <meta property="og:title" content="课程讲义 · Course Notes">
 <meta property="og:description" content="各门课程的讲义与笔记，持续更新。">
 <link rel="icon" href="${FAVICON}">
+<link rel="stylesheet" href="assets/rail.css?v=${VRCSS}">
+<script defer src="assets/search-index.js?v=${VIDX}"></script>
+<script defer src="assets/rail.js?v=${VRJS}"></script>
 <style>
   /* FONTS:BEGIN */
   /* FONTS:END */
@@ -33,26 +36,7 @@
       radial-gradient(1100px 620px at 38% -120px, rgb(255 226 180 / .075), transparent 70%),
       var(--bg);
   }
-  .wrap{max-width:1160px;margin:0 auto;padding:clamp(64px,11vh,120px) 32px 56px}
-
-  /* ============ 页眉：书名页 ============ */
-  header{display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px;margin-bottom:clamp(56px,9vh,96px)}
-  h1{font-family:var(--serif);font-weight:500;font-size:clamp(46px,7.4vw,92px);line-height:1;letter-spacing:.04em;color:var(--paper)}
-  .en-title{display:block;margin-top:18px;font-family:var(--italic);font-style:italic;font-size:clamp(18px,1.8vw,22px);color:var(--ink-3)}
-  .meta{display:flex;flex-direction:column;align-items:flex-end;gap:14px;font-family:var(--serif)}
-  .meta-t{font-size:14px;letter-spacing:.32em;padding-left:.32em;color:var(--ink-2)}
-  .meta-t b{font-weight:400;color:var(--paper)}
-  /* 缩略书架：整套丛书的标志，每门课一条小书脊，按辑分组 */
-  .emblem{display:flex;align-items:flex-end;border-bottom:1px solid rgb(236 228 212 / .3);padding:0 2px}
-  .emblem .grp{display:flex;align-items:flex-end;gap:3px}
-  .emblem .grp + .grp{margin-left:12px}
-  .emblem a,.emblem i{
-    display:block;width:var(--w);height:var(--h);border-radius:1px 1px 0 0;
-    background:linear-gradient(90deg,rgb(0 0 0 / .32),rgb(0 0 0 / 0) 28%,rgb(255 255 255 / .1) 50%,rgb(0 0 0 / 0) 70%,rgb(0 0 0 / .3)),rgb(var(--c));
-    transition:transform .5s var(--ease);
-  }
-  .emblem a:hover,.emblem a:focus-visible{transform:translateY(-4px)}
-  .emblem a:focus-visible{outline:1.5px solid var(--paper);outline-offset:2px}
+  .wrap{max-width:1160px;margin:0 auto;padding:clamp(28px,6vh,64px) 32px 0}
 
   /* ============ 书架 ============ */
   .shelf{position:relative;display:flex;align-items:flex-end;gap:calc(7px * var(--k));padding:0 calc(18px * var(--k))}
@@ -117,9 +101,9 @@
   /* ============ 辑 ============ */
   .series + .series{margin-top:clamp(56px,9vh,96px)}
   .series-head{display:flex;align-items:baseline;gap:16px;padding:0 calc(18px * var(--k)) 22px;font-family:var(--serif);font-weight:400}
-  .series-head .sno{font-size:18px;letter-spacing:.3em;color:var(--paper)}
-  .series-head .sname{font-size:14px;letter-spacing:.2em;color:var(--ink-2)}
-  .series-head .srange{margin-left:auto;font-size:13px;letter-spacing:.3em;color:var(--ink-3)}
+  .series-head .sno{font-size:18px;letter-spacing:.06em;color:var(--paper)}
+  .series-head .sname{font-size:14px;letter-spacing:.04em;color:var(--ink-2)}
+  .series-head .srange{margin-left:auto;font-family:var(--sans);font-size:13px;letter-spacing:.02em;color:var(--ink-3)}
 
   /* 浅色书脊（如「光」）：深色字 */
   .book.light{color:#2b2419;--gold:112 84 36}
@@ -136,7 +120,7 @@
     background:none;border:0;color:inherit;font:inherit;cursor:pointer;
     animation:shelve .9s var(--ease) both;animation-delay:calc(var(--d) * 70ms + 120ms);
   }
-  .env-label{font-family:var(--serif);font-size:13px;letter-spacing:.22em;color:var(--ink-3);transition:color .5s var(--ease),opacity .4s var(--ease)}
+  .env-label{font-family:var(--serif);font-size:13px;letter-spacing:.06em;color:var(--ink-3);transition:color .5s var(--ease),opacity .4s var(--ease)}
   .letter:hover .env-label,.letter:focus-visible .env-label{color:var(--paper)}
   .env{
     position:relative;display:block;width:calc(168px * var(--k));height:calc(114px * var(--k));perspective:700px;
@@ -190,21 +174,13 @@
   .slot .en{color:var(--ink-3)}
   .slot .vol{color:var(--ink-3);letter-spacing:.08em;font-family:var(--sans);font-size:calc(11px * var(--k))}
 
-  footer{margin-top:72px;padding-top:28px;border-top:1px solid var(--rule);display:flex;align-items:flex-start;gap:32px;color:var(--ink-3)}
-  footer .emblem{flex:none;margin-top:8px;opacity:.85}
-  .colophon{font-family:var(--serif);font-size:13px;line-height:2.2;letter-spacing:.14em;color:rgb(236 228 212 / .52)}
-  .colophon b{font-weight:500;letter-spacing:.26em;color:var(--ink-2)}
-  .colophon .fine{font-family:var(--sans);font-size:11.5px;line-height:1.9;letter-spacing:.08em;color:var(--ink-3)}
-
   /* ============ 响应式 ============ */
   @media (max-width:1100px){:root{--k:.82}}
-  @media (max-width:880px){:root{--k:.62} .meta{align-items:flex-start;margin-top:22px} header{grid-template-columns:1fr}}
+  @media (max-width:880px){:root{--k:.62}}
 
   /* 手机：书从书架上放倒，叠成一摞 */
   @media (max-width:720px){
-    .wrap{padding:56px 20px 40px}
-    header{margin-bottom:40px}
-    .en-title{margin-top:12px}
+    .wrap{padding:28px 20px 0}
     .shelf{flex-direction:column;align-items:stretch;gap:6px;padding:0}
     .plank{display:none}
     .book{
@@ -225,12 +201,10 @@
     .book:hover,.book:focus-visible{transform:translateX(6px)}
     .slot{width:auto;height:auto;flex-direction:row;justify-content:flex-start;gap:16px;padding:16px 26px;border-bottom:1px dashed rgb(236 228 212 / .2);border-radius:2px}
     .slot .vol{width:4.6em;flex:none;white-space:nowrap}
-    footer{margin-top:40px}
   }
   @media (max-width:720px){
     .series-head{padding:0 2px 14px}
     .series + .series{margin-top:44px}
-    footer{flex-direction:column;gap:18px}
   }
   @media (min-width:1241px){
     .letter:hover .env-label,.letter:focus-visible .env-label,.letter.open .env-label{opacity:0}
@@ -249,22 +223,16 @@
   }
 </style>
 </head>
-<body>
+<body class="home" data-root="./">
+${RAIL}
 <div class="wrap">
-  <header>
-    <div>
-      <h1>课程讲义</h1>
-      <span class="en-title">${EN_TITLE}</span>
-    </div>
-    <div class="meta">${META}</div>
-  </header>
+  <h1 class="sr">课程讲义</h1>
 
   <main>
 ${SERIES}
   </main>
-
-  ${FOOTER}
 </div>
+${FOOTER}
 ${LETTER_DIALOG}
 <script>
 (() => {

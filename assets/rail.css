@@ -1,0 +1,86 @@
+/* ============ 页眉：全站统一的细轨 ============ */
+/* 首页按书架宽度对齐，内页按正文宽度对齐 */
+body{--rw:1160px;--rp:32px}
+body:not(.home){--rw:820px;--rp:28px}
+.rail{
+  position:sticky;top:0;z-index:20;height:48px;
+  display:flex;align-items:center;gap:18px;padding:0 max(20px, calc((100% - var(--rw)) / 2 + var(--rp)));
+  background:rgb(19 17 15 / .82);backdrop-filter:blur(14px) saturate(1.2);-webkit-backdrop-filter:blur(14px) saturate(1.2);
+  border-bottom:1px solid transparent;transition:border-color .4s var(--ease);
+  font:14px/1 var(--sans);letter-spacing:0;color:var(--ink-2);
+}
+.rail.scrolled{border-bottom-color:var(--rule)}
+body.home .rail:not(.scrolled){background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+.rail a{text-decoration:none;color:inherit}
+.rail-mark{font-family:var(--serif);font-size:16px;font-weight:500;color:var(--paper);white-space:nowrap}
+.rail-path{flex:1;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
+.rail-path::before{content:"";flex:none;width:1px;height:14px;background:var(--rule);margin-right:6px}
+.rail-path a:hover{color:var(--ink)}
+.rail-path .sep{opacity:.35}
+.rail-path .now{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+
+.rail-find{
+  flex:none;margin-left:auto;display:flex;align-items:center;gap:10px;height:30px;padding:0 8px 0 12px;
+  border:1px solid var(--rule);border-radius:8px;background:rgb(236 228 212 / .03);
+  font:13px var(--sans);color:var(--ink-3);cursor:pointer;transition:border-color .3s,color .3s;
+}
+.rail-find:hover{border-color:rgb(236 228 212 / .3);color:var(--ink-2)}
+kbd{font:11px/1 var(--sans);padding:3px 6px;border-radius:4px;border:1px solid var(--rule);color:var(--ink-3)}
+
+/* 页眉下沿的阅读进度：本页读到哪里 */
+.rail-line{position:fixed;top:47px;left:0;height:1px;width:100%;z-index:21;pointer-events:none;
+  transform-origin:0 50%;transform:scaleX(var(--s,0));background:rgb(var(--ca, 236 228 212) / .8)}
+
+/* ============ 搜索面板 ============ */
+.find{position:fixed;inset:0;z-index:40;display:none;background:rgb(10 9 8 / .55);backdrop-filter:blur(3px)}
+.find.on{display:block}
+.find-box{
+  width:min(620px, calc(100vw - 32px));margin:min(16vh, 140px) auto 0;
+  background:#1b1815;border:1px solid rgb(236 228 212 / .14);border-radius:14px;overflow:hidden;
+  box-shadow:0 30px 80px -20px rgb(0 0 0 / .8);animation:findin .22s var(--ease);
+}
+@keyframes findin{from{opacity:0;transform:translateY(-6px) scale(.985)}}
+.find input{
+  width:100%;height:56px;padding:0 20px;border:0;border-bottom:1px solid var(--rule);outline:none;
+  background:transparent;font:17px var(--sans);color:var(--ink);
+}
+.find input::placeholder{color:var(--ink-3)}
+.find ul{list-style:none;max-height:52vh;overflow:auto;padding:6px}
+.find li a{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;text-decoration:none;color:var(--ink)}
+.find li a .dot{flex:none;width:4px;height:18px;border-radius:1px;background:rgb(var(--c))}
+.find li a .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.find li a .s{flex:none;font-size:12px;color:var(--ink-3)}
+.find li a mark{background:none;color:var(--paper);text-decoration:underline;text-decoration-color:rgb(236 228 212 / .4);text-underline-offset:3px}
+.find li.sel a{background:rgb(236 228 212 / .07)}
+.find .hint{display:flex;gap:16px;padding:10px 18px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-3)}
+.find .empty{padding:22px 18px;font-size:14px;color:var(--ink-3)}
+
+/* ============ 页脚：上架记录 ============ */
+.foot{
+  max-width:var(--rw);margin:96px auto 0;padding:28px var(--rp) 40px;
+  display:grid;grid-template-columns:1fr auto;gap:24px 48px;align-items:start;
+  border-top:1px solid var(--rule);font:13px/1.6 var(--sans);letter-spacing:0;color:var(--ink-3);
+}
+.foot h3{font:500 13px var(--sans);color:var(--ink-2);margin-bottom:10px}
+.foot ol{list-style:none;display:grid;gap:6px}
+.foot li{display:grid;grid-template-columns:3.4em 6px 2.4em 1fr;align-items:center;gap:10px}
+.foot li .v{color:var(--ink-3)}
+.foot li time{font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.foot li i{width:6px;height:14px;border-radius:1px;background:rgb(var(--c))}
+.foot li a{color:var(--ink-2);text-decoration:none}
+.foot li a:hover{color:var(--ink)}
+.foot .stat{text-align:right;font-variant-numeric:tabular-nums;line-height:1.9}
+.foot .stat b{font-weight:500;color:var(--ink-2)}
+.foot .fine{grid-column:1 / -1;padding-top:18px;border-top:1px solid rgb(236 228 212 / .06);display:flex;justify-content:space-between;gap:16px}
+.foot .fine a{color:var(--ink-3)}
+
+@media (max-width:720px){
+  .rail{gap:12px;padding:0 16px}
+  .rail-path{display:none}
+  .rail-find span{display:none}
+  .foot{grid-template-columns:1fr;padding:24px 20px 32px}
+  .foot .stat{text-align:left}
+  .foot .fine{flex-direction:column}
+}
+@media print{.rail,.rail-line,.find,.foot{display:none!important}}
+@media (prefers-reduced-motion:reduce){.find-box{animation:none}}

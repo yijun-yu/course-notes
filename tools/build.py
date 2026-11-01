@@ -194,14 +194,32 @@ PAGE = Template('''<!DOCTYPE html>
 <link rel="stylesheet" href="../assets/site.css?v=${vcss}">
 <style>:root{--c:${c};--ca:${ca}}</style>
 <script defer src="../assets/site.js?v=${vjs}"></script>
+<link rel="stylesheet" href="../assets/rail.css?v=${vrcss}">
+<script defer src="../assets/search-index.js?v=${vidx}"></script>
+<script defer src="../assets/rail.js?v=${vrjs}"></script>
 </head>
-<body class="${bodyclass}" data-course="${course}" data-chapter="${chapter}">
+<body class="${bodyclass}" data-course="${course}" data-chapter="${chapter}" data-root="../">
+${rail}
 <div class="wrap">
 ${inner}
 </div>
+\u0003FOOT\u0004
 </body>
 </html>
 ''')
+
+
+def rail_html(root, path=''):
+    """全站页眉：站名、所在位置、搜索。内页多一条阅读进度线。"""
+    return ('<header class="rail"><a class="rail-mark" href="%s">课程讲义</a>%s'
+            '<button class="rail-find" type="button" aria-label="搜索（快捷键 /）"><span>搜索</span><kbd>/</kbd></button>'
+            '</header>%s' % (root, '<nav class="rail-path" aria-label="当前位置">%s</nav>' % path if path else '',
+                             '<div class="rail-line" aria-hidden="true"></div>' if path else ''))
+
+
+def page_assets():
+    return dict(vcss=asset_version('site.css'), vjs=asset_version('site.js'), vrcss=asset_version('rail.css'),
+                vrjs=asset_version('rail.js'), vidx='\u0003IDX\u0004')
 
 
 def asset_version(name):
@@ -256,6 +274,11 @@ def toolbar_html(probs):
         '</div>'])
 
 
+def chapter_path(course, ch):
+    return ('<a href="./">%s</a><span class="sep">/</span><span class="now">%s %s</span>'
+            % (esc(course['title']), esc(ch['no']), esc(ch['title'])))
+
+
 def chapter_page(course, ch, probs, prev_ch, next_ch):
     items, last_type = [], None
     for n, p in enumerate(probs, 1):
@@ -269,13 +292,12 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
     right = ('<a href="%s.html">%s %s →</a>' % (next_ch['id'], esc(next_ch['no']), esc(next_ch['title']))
              if next_ch else '<span></span>')
     inner = (
-        '<nav class="crumb"><a href="../">课程讲义</a><span>/</span><a href="./">%s</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="count">%d 题</p></header>\n'
         '%s\n<main class="list" id="list">\n%s\n</main>\n<footer class="pager">%s%s</footer>'
-        % (esc(course['title']), esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
+        % (esc(ch['no']), esc(ch['title']), len(probs), toolbar_html(probs),
            '\n'.join(items), left, right))
     return PAGE.substitute(
-        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
+        **page_assets(), rail=rail_html('../', chapter_path(course, ch)),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
         desc='%s %s %s，共 %d 题。' % (course['title'], ch['no'], ch['title'], len(probs)),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
@@ -472,14 +494,13 @@ def notes_page(course, ch, notes, next_ch):
              if next_ch else '<span></span>')
     en = '<p class="en">%s</p>' % esc(ch['en']) if ch.get('en') else ''
     inner = (
-        '<nav class="crumb"><a href="../">课程讲义</a><span>/</span><a href="./">%s</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1>%s<p class="count">%d 个知识点</p></header>\n'
         '%s\n<nav class="kp-toc" aria-label="本讲知识点"><ol>%s</ol></nav>\n'
         '<div class="intro">%s</div>\n<main class="notes-body">\n%s</main>\n<footer class="pager">%s%s</footer>'
-        % (esc(course['title']), esc(ch['no']), esc(ch['title']), en, n_kp, bar, toc,
+        % (esc(ch['no']), esc(ch['title']), en, n_kp, bar, toc,
            notes['intro'], secs, left, right))
     return PAGE.substitute(
-        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
+        **page_assets(), rail=rail_html('../', chapter_path(course, ch)),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
         desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], n_kp),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
@@ -513,13 +534,12 @@ def course_page(course, counts):
         toc += ('\n<details class="soon-group"%s><summary>%s</summary>\n<ol class="toc">\n%s\n</ol>\n</details>'
                 % ('' if avail_rows else ' open', label, '\n'.join(soon_rows)))
     inner = (
-        '<nav class="crumb"><a href="../">课程讲义</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="en">%s</p>'
         '<p class="count">%s</p></header>%s'
         % (esc(course['volume']), esc(course['title']), esc(course['en']), status, toc))
     return PAGE.substitute(
-        vcss=asset_version('site.css'), vjs=asset_version('site.js'),
-        title='%s · 课程讲义' % course['title'],
+        title='%s · 课程讲义' % course['title'], **page_assets(),
+        rail=rail_html('../', '<span class="now">%s %s</span>' % (esc(course['volume']), esc(course['title']))),
         desc='%s 讲义目录。' % course['title'],
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
         bodyclass='course', course=course['id'], chapter='index', inner=inner)
@@ -640,33 +660,6 @@ def cn_n(n):
     return CN[n // 10] + '十' + (CN[n % 10] if n % 10 else '')
 
 
-def cn_date(d):
-    return '%s年%s月%s日' % (''.join('〇一二三四五六七八九'[int(ch)] for ch in str(d.year)), cn_n(d.month), cn_n(d.day))
-
-
-def emblem_html(courses, links=True):
-    """缩略书架：每门课一条小书脊，高矮、颜色取自真实书脊，按辑分组，站在一条细线上。"""
-    groups = {}
-    for c in courses:
-        groups.setdefault(c['series'], []).append(c)
-    out = []
-    for sno in sorted(groups):
-        items = []
-        for c in sorted(groups[sno], key=lambda c: c['order']):
-            st = '--c:%s;--w:%dpx;--h:%dpx' % (' '.join(map(str, c['color'])), round(c['spine']['w'] / 20),
-                                               round(12 + (c['spine']['h'] - 400) * 0.3))
-            if links:
-                label = esc(c['volume'] + ' ' + c['title'])
-                items.append('<a href="./%s/index.html" style="%s" title="%s" aria-label="%s"></a>'
-                             % (esc(c['id']), st, label, label))
-            else:
-                items.append('<i style="%s"></i>' % st)
-        out.append('<span class="grp">%s</span>' % ''.join(items))
-    if links:
-        return '<nav class="emblem" aria-label="全部课程">%s</nav>' % ''.join(out)
-    return '<span class="emblem" aria-hidden="true">%s</span>' % ''.join(out)
-
-
 def favicon_svg(courses):
     bw, gap, ggap = 4.6, 2.2, 3.0
     groups = {}
@@ -693,25 +686,52 @@ def favicon_uri(courses):
     return 'data:image/svg+xml,' + urllib.parse.quote(svg)
 
 
-def footer_html(courses, site):
-    """页脚做成书的版权页：初版与修订日期、收录量、排印说明。"""
-    y, m = site.get('first', '2026-10').split('-')
-    first = '%s年%s月' % (''.join('〇一二三四五六七八九'[int(ch)] for ch in y), cn_n(int(m)))
-    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+def git_dates(path):
+    """这个文件每次提交的日期（新→旧）；没提交过的返回空。"""
+    try:
+        out = subprocess.run(['git', '-C', str(ROOT), 'log', '--follow', '--format=%ad', '--date=short', '--', str(path)],
+                             capture_output=True, text=True, timeout=20).stdout.split()
+    except Exception:
+        return []
+    return out
+
+
+def footer_html(courses, root):
+    """页脚：最近的更新记录（来自 git 历史）+ 收录量。"""
+    today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).date().isoformat()
+    log = []
+    for c in courses:
+        for k, ch in enumerate(c['chapters']):
+            f = c['_dir'] / (ch['id'] + '.md')
+            if not f.exists():
+                continue
+            ds = git_dates(f)
+            dirty = subprocess.run(['git', '-C', str(ROOT), 'status', '--porcelain', '--', str(f)],
+                                   capture_output=True, text=True).stdout.strip() if ds else 'new'
+            latest = today if dirty else ds[0]
+            verb = '新增' if (not ds or (len(set(ds)) == 1 and latest == ds[-1])) else '更新'
+            log.append((latest, c['order'] * 100 + k, verb, c, ch))
+    log.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    rows = ''.join(
+        '<li><time datetime="%s">%s</time><i style="--c:%s"></i><span class="v">%s</span>'
+        '<a href="%s%s/%s.html">%s · %s %s</a></li>'
+        % (d, d[5:].replace('-', '/'), ' '.join(map(str, c['color'])), verb, root, esc(c['id']), esc(ch['id']),
+           esc(c['title']), esc(ch['no']), esc(ch['title'])) for d, _, verb, c, ch in log[:6])
     probs = sum(c.get('_count', 0) for c in courses if c.get('kind') != 'notes')
     kps = sum(c.get('_count', 0) for c in courses if c.get('kind') == 'notes')
-    parts = ['共%s卷' % cn_n(len(courses))]
+    stat = ['<b>%d</b> 门课' % len(courses)]
     if probs:
-        parts.append('题目 %d 道' % probs)
+        stat.append('<b>%d</b> 道题' % probs)
     if kps:
-        parts.append('知识点 %d 个' % kps)
-    return ('<footer>%s<div class="colophon"><b>%s</b>　%s<br>初版 %s　修订 %s<br>%s<br>'
-            '<span class="fine">宋体排印，公式由 KaTeX 渲染。个人整理，难免有误。</span></div></footer>'
-            % (emblem_html(courses, links=False), esc(site['title']), esc(site['en']), first, cn_date(today),
-               '　'.join(parts)))
+        stat.append('<b>%d</b> 个知识点' % kps)
+    return ('<footer class="foot"><section><h3>更新记录</h3><ol>%s</ol></section>'
+            '<p class="stat">%s<br>最近更新 %s</p>'
+            '<p class="fine"><span>个人整理，难免有误；遇到觉得不对的地方，请相信自己的判断。</span>'
+            '<span>宋体排印 · 公式由 KaTeX 渲染</span></p></footer>'
+            % (rows, ' · '.join(stat), log[0][0].replace('-', '/') if log else today.replace('-', '/')))
 
 
-def build_home(courses, site):
+def build_home(courses, site, idx_version):
     by_series = {}
     for c in courses:
         by_series.setdefault(c['series'], []).append(c)
@@ -740,12 +760,11 @@ def build_home(courses, site):
             '<div class="plank" aria-hidden="true"></div>\n</section>'
             % (esc(meta['no']), esc(meta['name']), esc(rng), '\n'.join(books)))
     ordered = sorted(courses, key=lambda c: c['order'])
-    meta_html = emblem_html(ordered) + '<p class="meta-t">共%s辑 · <b>%s至%s</b></p>' % (
-        cn(len(by_series)), esc(ordered[0]['volume']), esc(ordered[-1]['volume']))
     tpl = Template((TOOLS / 'index.template.html').read_text(encoding='utf8'))
     dialog = letter_dialog(site['letter']) if site.get('letter') else ''
-    page = tpl.substitute(EN_TITLE=esc(site['en']), META=meta_html, SERIES='\n'.join(sections), LETTER_DIALOG=dialog,
-                          FOOTER=footer_html(ordered, site), FAVICON=favicon_uri(ordered))
+    page = tpl.substitute(RAIL=rail_html('./'), SERIES='\n'.join(sections), LETTER_DIALOG=dialog,
+                          FOOTER=footer_html(ordered, './'), FAVICON=favicon_uri(ordered),
+                          VRCSS=asset_version('rail.css'), VRJS=asset_version('rail.js'), VIDX=idx_version)
 
     # 首页保持单文件：字体以 base64 内嵌（宋体按首页用到的字截取）
     visible = html.unescape(re.sub(r'<style>.*?</style>|<[^>]+>', '', page, flags=re.S))
@@ -768,6 +787,36 @@ def build_home(courses, site):
                   lambda m: '/* FONTS:BEGIN */\n' + '\n'.join(faces) + '\n  /* FONTS:END */', page, flags=re.S)
 
 
+# ------------------------------------------------------------------ 搜索索引
+def plain(s):
+    """搜索用的纯文本：去掉公式定界符和 Markdown 记号。"""
+    return re.sub(r'\s+', ' ', re.sub(r'[$*`\\{}]', '', s)).strip()
+
+
+def index_course(index, course, avail, data):
+    """课程、章节、题型（每类指向第一道题）、知识点，都进搜索索引。链接相对站点根目录。"""
+    c = ' '.join(map(str, course['color']))
+    cid = course['id']
+    index.append({'k': '课程', 't': course['title'], 'en': course['en'], 's': course['volume'], 'u': cid + '/', 'c': c})
+    for ch in avail:
+        page = '%s/%s.html' % (cid, ch['id'])
+        index.append({'k': '章', 't': ch['title'], 'en': ch.get('en', ''), 's': '%s · %s' % (course['title'], ch['no']),
+                      'u': page, 'c': c})
+        if course.get('kind') == 'notes':
+            for i, k in enumerate(data[ch['id']]['kps']):
+                if k['no']:
+                    index.append({'k': '知识点', 't': plain(k['zh']), 'en': k['en'],
+                                  's': '%s · %s' % (course['title'], k['no']),
+                                  'u': '%s#kp-%s' % (page, k['no'].replace('.', '-')), 'c': c})
+        else:
+            seen = set()
+            for n, p in enumerate(data[ch['id']], 1):
+                if p['type'] not in seen:
+                    seen.add(p['type'])
+                    index.append({'k': '题型', 't': plain(p['type_name']), 's': '%s · %s' % (course['title'], ch['no']),
+                                  'u': '%s#q%d' % (page, n), 'c': c})
+
+
 # ------------------------------------------------------------------ 主流程
 def main():
     site = json.loads((CONTENT / 'site.json').read_text(encoding='utf8'))
@@ -779,6 +828,7 @@ def main():
     courses.sort(key=lambda c: c.get('order', 99))
 
     pages = {}
+    index = []
     serif_text = [site['title'], '待续', '卷一二三四五六七八九十', '第章综合']
     summary = []
     for course in courses:
@@ -794,6 +844,7 @@ def main():
                     data[ch['id']] = parse_notes(f)
                     serif_text += [k['zh'] for k in data[ch['id']]['kps']]
             avail = [ch for ch in chapters if ch['id'] in data]
+            index_course(index, course, avail, data)
             for i, ch in enumerate(avail):
                 nxt = avail[i + 1] if i + 1 < len(avail) else None
                 pages[ROOT / course['id'] / (ch['id'] + '.html')] = notes_page(course, ch, data[ch['id']], nxt)
@@ -810,6 +861,7 @@ def main():
                 data[ch['id']] = parse_chapter(f)
         course['_count'] = sum(len(v) for v in data.values())
         avail = [ch for ch in chapters if ch['id'] in data]
+        index_course(index, course, avail, data)
         for i, ch in enumerate(avail):
             nxt = avail[i + 1] if i + 1 < len(avail) else None
             pages[ROOT / course['id'] / (ch['id'] + '.html')] = chapter_page(course, ch, data[ch['id']], None, nxt)
@@ -819,16 +871,22 @@ def main():
             summary.append('%s %s：%d 题 %s' % (course['id'], ch['id'], len(data[ch['id']]), tiers))
         pages[ROOT / course['id'] / 'index.html'] = course_page(course, {k: len(v) for k, v in data.items()})
 
+    idx_js = 'window.SEARCH_INDEX=' + json.dumps(index, ensure_ascii=False, separators=(',', ':')) + ';\n'
+    (ROOT / 'assets' / 'search-index.js').write_text(idx_js, encoding='utf8')
+    idx_version = asset_version('search-index.js')
+    foot = footer_html(courses, '../')
     rendered = render_maths()
     for path, page in pages.items():
         page = PH.sub(lambda m: rendered[int(m.group(1))], page)
+        page = page.replace('\u0003FOOT\u0004', foot).replace('\u0003IDX\u0004', idx_version)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(page, encoding='utf8')
 
     ensure_latin_fonts()
     build_serif_subset(serif_text)
-    (ROOT / 'index.html').write_text(build_home(courses, site), encoding='utf8')
+    (ROOT / 'index.html').write_text(build_home(courses, site, idx_version), encoding='utf8')
     print('\n'.join(summary))
+    print('搜索索引 %d 条' % len(index))
     print('课程 %d 门，页面 %d 个（另含首页），公式 %d 条，警告 %d 条'
           % (len(courses), len(pages), len(M.items), len(WARNINGS)))
 
