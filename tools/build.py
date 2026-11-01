@@ -211,9 +211,9 @@ ${inner}
 
 def rail_html(root, path=''):
     """全站页眉：站名、所在位置、搜索。内页多一条阅读进度线。"""
-    return ('<header class="rail"><a class="rail-mark" href="%s">课程讲义</a>%s'
+    return ('<header class="rail"><div class="rail-in"><a class="rail-mark" href="%s">课程讲义</a>%s'
             '<button class="rail-find" type="button" aria-label="搜索（快捷键 /）"><span>搜索</span><kbd>/</kbd></button>'
-            '</header>%s' % (root, '<nav class="rail-path" aria-label="当前位置">%s</nav>' % path if path else '',
+            '%s</div></header>' % (root, '<nav class="rail-path" aria-label="当前位置">%s</nav>' % path if path else '',
                              '<div class="rail-line" aria-hidden="true"></div>' if path else ''))
 
 
