@@ -1,0 +1,19 @@
+{
+  "id": "english",
+  "order": 12,
+  "series": 7,
+  "volume": "卷十二",
+  "title": "英语",
+  "en": "English",
+  "color": [
+    110,
+    70,
+    46
+  ],
+  "spine": {
+    "w": 124,
+    "h": 426
+  },
+  "glyph": "<path d=\"M20 4L28 18L20 34L12 18Z\"/><path class=\"faint\" d=\"M20 18V34\"/><circle class=\"dot\" cx=\"20\" cy=\"18\" r=\"2\"/><path class=\"faint\" d=\"M6 36H34\"/>",
+  "chapters": []
+}

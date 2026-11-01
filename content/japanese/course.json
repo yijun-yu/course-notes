@@ -1,0 +1,20 @@
+{
+  "id": "japanese",
+  "order": 11,
+  "series": 7,
+  "volume": "卷十一",
+  "title": "日语",
+  "en": "Japanese",
+  "color": [
+    200,
+    150,
+    156
+  ],
+  "spine": {
+    "w": 118,
+    "h": 418
+  },
+  "glyph": "<path d=\"M9 7V20M9 7H19\"/><path d=\"M31 33V20M31 33H21\"/><path class=\"faint\" d=\"M14 13V27M20 11V29M26 13V27\"/><circle class=\"dot\" cx=\"20\" cy=\"20\" r=\"1.8\"/>",
+  "chapters": [],
+  "light": true
+}

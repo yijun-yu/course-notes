@@ -1,0 +1,19 @@
+{
+  "id": "parallel-computing",
+  "order": 8,
+  "series": 4,
+  "volume": "卷八",
+  "title": "并行计算",
+  "en": "Parallel Computing",
+  "color": [
+    96,
+    104,
+    50
+  ],
+  "spine": {
+    "w": 126,
+    "h": 430
+  },
+  "glyph": "<path class=\"faint\" d=\"M5 6V34\"/><path d=\"M5 11H31M5 17H31M5 23H31M5 29H31\"/><path d=\"M27 8L32 11L27 14M27 14L32 17L27 20M27 20L32 23L27 26M27 26L32 29L27 32\"/><path class=\"faint\" d=\"M36 6V34\"/>",
+  "chapters": []
+}

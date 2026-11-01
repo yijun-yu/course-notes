@@ -123,7 +123,9 @@
 
 
   /* ============ 辑 ============ */
-  .series + .series{margin-top:clamp(56px,9vh,96px)}
+  /* 一行放得下的几辑并排，像一个分格书柜；各格的层板分开、各插一张层签 */
+  .case{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:calc(22px * var(--k));row-gap:clamp(56px,9vh,96px)}
+  .series{flex:1 0 auto;min-width:0}
 
   /* 浅色书脊（如「光」）：深色字 */
   .book.light{color:#2b2419;--gold:112 84 36}
@@ -226,6 +228,7 @@
     .slot .vol{width:4.6em;flex:none;white-space:nowrap}
   }
   @media (max-width:720px){
+    .case{display:block}
     .series + .series{margin-top:44px}
   }
   @media (min-width:1241px){
@@ -250,7 +253,7 @@ ${RAIL}
 <div class="wrap">
   <h1 class="sr">课程讲义</h1>
 
-  <main>
+  <main class="case">
 ${SERIES}
   </main>
 </div>
