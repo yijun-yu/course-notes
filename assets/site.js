@@ -56,6 +56,8 @@
       h.hidden = !probs.some((p) => p.dataset.type === h.dataset.type && !p.hidden);
     });
     body.classList.toggle('by-type', state.byType);
+    const tf = $('.tgl-f');
+    if (tf) tf.classList.toggle('on', !!state.tier || !state.ext);
     tierBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tier === state.tier)));
     if (optExt) optExt.checked = state.ext;
     if (optBy) optBy.checked = state.byType;
@@ -119,6 +121,17 @@
     save('done', Array.from(done));
     renderDone();
   });
+
+  /* 手机上工具条折叠：筛选、更多 */
+  const tglBtns = $$('.bar .tgl');
+  tglBtns.forEach((t) => t.addEventListener('click', () => {
+    const panel = document.getElementById(t.dataset.panel);
+    if (!panel) return;
+    const willOpen = !panel.classList.contains('open');
+    $$('.bar .panel').forEach((p) => p.classList.remove('open'));
+    tglBtns.forEach((x) => x.setAttribute('aria-expanded', 'false'));
+    if (willOpen) { panel.classList.add('open'); t.setAttribute('aria-expanded', 'true'); }
+  }));
 
   const printBtn = $('#btn-print');
   if (printBtn) printBtn.addEventListener('click', () => window.print());
