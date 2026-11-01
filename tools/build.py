@@ -278,9 +278,11 @@ def chapter_page(course, ch, probs, prev_ch, next_ch):
 # ------------------------------------------------------------------ 讲义（知识点）页
 # 课程 course.json 里写 "kind": "notes" 时，章节文件按讲义格式解析：
 #   ## 1.1 中文标题 | English Title        一个知识点
-#   :::quick / :::proof ★ 标题 / :::example 标题 / :::pitfall / :::exam / :::note 标题   …   :::
+#   :::quick / :::proof ★ 标题 / :::example 标题 / :::problem 真题标题 / :::pitfall / :::exam / :::note 标题   …   :::
+#   不带编号的 ## 标题（如「## 真题精解 | Past Exam Problems」）进目录但不计入知识点数
 #   #### 小标题、- 无序列表、1. 有序列表、| 表格 |、$..$、$$..$$、**粗体**
-BOX_NAMES = {'quick': '速查', 'example': '例题', 'pitfall': '易错点', 'exam': '真题考点', 'note': '补充'}
+BOX_NAMES = {'quick': '速查', 'example': '例题', 'problem': '真题', 'pitfall': '易错点', 'exam': '真题考点', 'note': '补充'}
+BOX_CLASS = {'problem': 'example exam-q'}
 
 
 def render_rich(s):
@@ -436,18 +438,24 @@ def box_html(name, title, inner, fname):
         warn('%s：未知容器 :::%s' % (fname, name))
     label = BOX_NAMES.get(name, name)
     return ('<div class="box %s"><div class="box-h"><span class="btag">%s</span>%s</div>'
-            '<div class="box-b">%s</div></div>' % (esc(name), label, ('<span class="bt">%s</span>' % t) if t else '', inner))
+            '<div class="box-b">%s</div></div>' % (esc(BOX_CLASS.get(name, name)), label, ('<span class="bt">%s</span>' % t) if t else '', inner))
 
 
 def notes_page(course, ch, notes, next_ch):
     kps = notes['kps']
-    toc = ''.join('<li><a href="#kp-%s"><span class="kno">%s</span><span class="kt">%s</span>'
+    # 不带编号的 ##（如「真题精解」）照常进目录，但不计入知识点数
+    for i, k in enumerate(kps):
+        k['slug'] = k['no'].replace('.', '-') if k['no'] else 'x%d' % i
+    n_kp = sum(1 for k in kps if k['no'])
+    toc = ''.join('<li%s><a href="#kp-%s"><span class="kno">%s</span><span class="kt">%s</span>'
                   '<span class="ken">%s</span></a></li>'
-                  % (esc(k['no'].replace('.', '-')), esc(k['no']), render_inline(k['zh']), esc(k['en'])) for k in kps)
+                  % ('' if k['no'] else ' class="extra"', esc(k['slug']), esc(k['no'] or '◆'),
+                     render_inline(k['zh']), esc(k['en'])) for k in kps)
     secs = ''.join(
-        '<section class="kp" id="kp-%s"><h2><span class="kno">%s</span><span class="kt">%s</span>'
+        '<section class="kp%s" id="kp-%s"><h2><span class="kno">%s</span><span class="kt">%s</span>'
         '<span class="ken">%s</span></h2>\n%s\n</section>\n'
-        % (esc(k['no'].replace('.', '-')), esc(k['no']), render_inline(k['zh']), esc(k['en']), k['html']) for k in kps)
+        % ('' if k['no'] else ' extra', esc(k['slug']), esc(k['no']), render_inline(k['zh']), esc(k['en']), k['html'])
+        for k in kps)
     bar = ('<div class="bar" role="toolbar" aria-label="显示选项">'
            '<label class="chk"><input type="checkbox" id="opt-proofs"><span>展开全部证明</span></label>'
            '<label class="chk"><input type="checkbox" id="opt-only-must"><span>只看 ★ 证明</span></label>'
@@ -461,12 +469,12 @@ def notes_page(course, ch, notes, next_ch):
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1>%s<p class="count">%d 个知识点</p></header>\n'
         '%s\n<nav class="kp-toc" aria-label="本讲知识点"><ol>%s</ol></nav>\n'
         '<div class="intro">%s</div>\n<main class="notes-body">\n%s</main>\n<footer class="pager">%s%s</footer>'
-        % (esc(course['title']), esc(ch['no']), esc(ch['title']), en, len(kps), bar, toc,
+        % (esc(course['title']), esc(ch['no']), esc(ch['title']), en, n_kp, bar, toc,
            notes['intro'], secs, left, right))
     return PAGE.substitute(
         vcss=asset_version('site.css'), vjs=asset_version('site.js'),
         title='%s %s · %s' % (ch['no'], ch['title'], course['title']),
-        desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], len(kps)),
+        desc='%s %s %s，共 %d 个知识点。' % (course['title'], ch['no'], ch['title'], n_kp),
         c=' '.join(map(str, course['color'])), ca=' '.join(map(str, lighten(course['color']))),
         bodyclass='notes', course=course['id'], chapter=ch['id'], inner=inner)
 
@@ -687,9 +695,10 @@ def main():
             for i, ch in enumerate(avail):
                 nxt = avail[i + 1] if i + 1 < len(avail) else None
                 pages[ROOT / course['id'] / (ch['id'] + '.html')] = notes_page(course, ch, data[ch['id']], nxt)
-                summary.append('%s %s：%d 个知识点' % (course['id'], ch['id'], len(data[ch['id']]['kps'])))
+                summary.append('%s %s：%d 个知识点' % (course['id'], ch['id'],
+                                                     sum(1 for k in data[ch['id']]['kps'] if k['no'])))
             pages[ROOT / course['id'] / 'index.html'] = course_page(
-                course, {k: len(v['kps']) for k, v in data.items()})
+                course, {k: sum(1 for x in v['kps'] if x['no']) for k, v in data.items()})
             continue
         for ch in chapters:
             serif_text += [ch['no'], ch['title']]

@@ -160,7 +160,7 @@ span.disp{display:block}
 
 .box{margin:22px 0;border:1px solid var(--rule);border-radius:10px;background:rgb(236 228 212 / .025);overflow:hidden}
 .box-h{display:flex;align-items:baseline;gap:12px;padding:10px 18px;border-bottom:1px solid var(--rule);font-size:13px;letter-spacing:.12em;color:var(--ink-2)}
-.btag{color:rgb(var(--ca));font-weight:600}
+.btag{flex:none;white-space:nowrap;color:rgb(var(--ca));font-weight:600}
 .bt{color:var(--paper);letter-spacing:.04em;font-size:14.5px}
 .box-b{padding:6px 20px 10px}
 .box.quick{border-color:rgb(var(--c) / .9);background:rgb(var(--c) / .14)}
@@ -182,6 +182,12 @@ details.proof[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)
 .proof.opt .ptag{color:var(--ink-3);border-color:var(--rule)}
 .proof-body{padding:4px 0 8px;font-size:16px;line-height:1.85;color:rgb(236 228 212 / .9)}
 .only-must details.proof.opt{display:none}
+.kp-toc li.extra .kno{color:#e0c070}
+.kp.extra{border-top-color:rgb(224 196 112 / .6)}
+.kp.extra h2 .kno{display:none}
+.box.example.exam-q{border-left-color:#e0c070}
+.box.example.exam-q .btag{color:#e0c070}
+.box-b h4:first-child{margin-top:14px}
 
 /* ---------- 页脚翻页 ---------- */
 .pager{display:flex;justify-content:space-between;gap:16px;margin-top:56px;padding-top:20px;border-top:1px solid var(--rule);font-size:14px;letter-spacing:.06em;color:var(--ink-2)}
@@ -200,6 +206,11 @@ details.proof[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)
   .toc .t{font-size:19px}
   .toc a,.toc .row{padding:17px 2px;gap:10px}
   .toc .no{width:3.8em}
+  .box-h{padding:9px 14px}
+  .box-b{padding:4px 14px 8px}
+  .tbl th,.tbl td{white-space:nowrap;padding:6px 10px}
+  .kp-toc .ken{display:none}
+  details.proof{padding-left:12px}
 }
 
 /* ---------- 打印：白底黑字，答案按「全部答案」开关决定是否展开 ---------- */
