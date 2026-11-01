@@ -227,8 +227,8 @@ def problem_html(p, n):
         '<button class="copy" type="button" title="复制题目（含 LaTeX 源码），可直接粘贴给 AI">复制</button></div>\n'
         '<div class="stmt">{stmt}</div>\n'
         '<script type="text/plain" class="src">{src}</script>\n'
-        '<details class="ans"><summary>答案</summary>\n'
-        '<div class="ans-body">{ans}</div>\n{idea}\n</details>\n'
+        '<div class="reveal">\n{idea}\n<details class="ans"><summary>答案</summary>\n'
+        '<div class="ans-body">{ans}</div>\n</details>\n</div>\n'
         '</div>\n</article>'
     ).format(n=n, id=esc(p['id']), type=esc(p['type']), tier=esc(p['tier']), ext=ext, flag=flag,
              stmt=render_text(p['stmt']), src=p['stmt'].replace('</', '<\\/'), ans=render_text(p['ans']), idea=idea)
@@ -236,18 +236,22 @@ def problem_html(p, n):
 
 def toolbar_html(probs):
     tiers = [t for t in ('基础', '典型', '进阶') if any(p['tier'] == t for p in probs)]
-    b = ['<div class="bar" role="toolbar" aria-label="显示选项">',
-         '<div class="seg" role="group" aria-label="档次">'
-         '<button type="button" data-tier="" aria-pressed="true">全部</button>'
-         + ''.join('<button type="button" data-tier="%s" aria-pressed="false">%s</button>' % (t, t) for t in tiers)
-         + '</div>']
-    if any(p['ext'] for p in probs):
-        b.append('<label class="chk"><input type="checkbox" id="opt-ext" checked><span>拓展</span></label>')
-    b.append('<label class="chk"><input type="checkbox" id="opt-bytype"><span>按题型</span></label>')
-    b.append('<label class="chk"><input type="checkbox" id="opt-allans"><span>全部答案</span></label>')
-    b.append('<span class="sp"></span><span class="prog" id="prog" aria-live="polite"></span>'
-             '<button type="button" class="btn" id="btn-print">打印</button></div>')
-    return '\n'.join(b)
+    seg = ('<div class="seg" role="group" aria-label="档次">'
+           '<button type="button" data-tier="" aria-pressed="true">全部</button>'
+           + ''.join('<button type="button" data-tier="%s" aria-pressed="false">%s</button>' % (t, t) for t in tiers)
+           + '</div>')
+    ext = ('<label class="chk c-ext"><input type="checkbox" id="opt-ext" checked><span>含拓展</span></label>'
+           if any(p['ext'] for p in probs) else '')
+    return ''.join([
+        '<div class="bar" role="toolbar" aria-label="显示选项">',
+        '<button type="button" class="tgl tgl-f" data-panel="p-filter" aria-expanded="false" aria-controls="p-filter">筛选</button>',
+        '<div class="panel" id="p-filter">%s%s</div>' % (seg, ext),
+        '<label class="chk c-by"><input type="checkbox" id="opt-bytype"><span>按题型</span></label>',
+        '<span class="sp"></span><span class="prog" id="prog" aria-live="polite"></span>',
+        '<button type="button" class="tgl tgl-m" data-panel="p-more" aria-expanded="false" aria-controls="p-more">更多</button>',
+        '<div class="panel" id="p-more"><label class="chk c-all"><input type="checkbox" id="opt-allans"><span>全部答案</span></label>'
+        '<button type="button" class="btn" id="btn-print">打印</button></div>',
+        '</div>'])
 
 
 def chapter_page(course, ch, probs, prev_ch, next_ch):
@@ -483,21 +487,29 @@ def notes_page(course, ch, notes, next_ch):
 def course_page(course, counts):
     notes = course.get('kind') == 'notes'
     unit = '个知识点' if notes else '题'
-    rows = []
+    avail_rows, soon_rows = [], []
     for ch in course['chapters']:
         n = counts.get(ch['id'])
         head = '<span class="no">%s</span><span class="t">%s</span><span class="dots"></span>' % (
             esc(ch['no']), esc(ch['title']))
         if n:
-            rows.append('<li><a href="%s.html">%s<span class="n">%d %s</span></a></li>' % (ch['id'], head, n, unit))
+            avail_rows.append('<li><a href="%s.html">%s<span class="n">%d %s</span></a></li>'
+                              % (ch['id'], head, n, unit))
         else:
-            rows.append('<li class="soon"><div class="row">%s<span class="n">待续</span></div></li>' % head)
+            soon_rows.append('<li class="soon"><div class="row">%s<span class="n">待续</span></div></li>' % head)
     total = sum(counts.values())
     if notes:
         status = '已收录 %d 讲 · %d 个知识点' % (len(counts), total) if total else '讲义整理中，敬请期待'
     else:
         status = '已收录 %d 题' % total if total else '题目整理中，敬请期待'
-    toc = '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(rows) if rows else ''
+    toc = ''
+    if avail_rows:
+        toc += '\n<ol class="toc">\n%s\n</ol>' % '\n'.join(avail_rows)
+    if soon_rows:
+        what = '讲' if notes else '章'
+        label = '其余 %d %s整理中' % (len(soon_rows), what) if avail_rows else '%s整理中' % ('讲义' if notes else '章节')
+        toc += ('\n<details class="soon-group"%s><summary>%s</summary>\n<ol class="toc">\n%s\n</ol>\n</details>'
+                % ('' if avail_rows else ' open', label, '\n'.join(soon_rows)))
     inner = (
         '<nav class="crumb"><a href="../">课程讲义</a></nav>\n'
         '<header class="head"><p class="kicker">%s</p><h1>%s</h1><p class="en">%s</p>'
@@ -588,13 +600,18 @@ def cn(n):
 
 def book_html(c, i):
     light = ' light' if c.get('light') else ''
+    n = c.get('_count', 0)
+    has = ' has' if n else ''
+    unit = '个知识点' if c.get('kind') == 'notes' else '题'
+    title = ' title="已有 %d %s"' % (n, unit) if n else ''
+    mark = '<span class="mark" aria-hidden="true"></span><span class="sr">，已有 %d %s</span>' % (n, unit) if n else ''
     return (
-        '<a class="book%s" href="./%s/index.html" style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
+        '<a class="book%s%s" href="./%s/index.html"%s style="--c:%s;--w:%dpx;--h:%dpx;--d:%d">\n'
         '  <span class="vol">%s</span>\n'
         '  <span class="spine"><h2>%s</h2><span class="en">%s</span></span>\n'
-        '  <svg class="glyph" viewBox="0 0 40 40" aria-hidden="true">%s</svg>\n</a>'
-        % (light, esc(c['id']), ' '.join(map(str, c['color'])), c['spine']['w'], c['spine']['h'], i,
-           esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph']))
+        '  <svg class="glyph" viewBox="0 0 40 40" aria-hidden="true">%s</svg>%s\n</a>'
+        % (light, has, esc(c['id']), title, ' '.join(map(str, c['color'])), c['spine']['w'], c['spine']['h'], i,
+           esc(c['volume']), esc(c['title']), esc(c['en']), c['glyph'], mark))
 
 
 def letter_button(lt, i):
@@ -607,6 +624,7 @@ def letter_button(lt, i):
 def letter_dialog(lt):
     paras = ''.join('<p>%s</p>' % esc(p) for p in lt['paragraphs'])
     return ('<dialog class="letter-dialog" aria-labelledby="letter-title"><article class="paper">'
+            '<form method="dialog" class="x"><button class="xbtn" aria-label="合上这封信">×</button></form>'
             '<h2 id="letter-title">%s</h2>%s<p class="sign">%s<br>%s</p>'
             '<form method="dialog"><button class="close">合上</button></form></article></dialog>'
             % (esc(lt['title']), paras, esc(lt['sign']), esc(lt['date'])))
@@ -698,6 +716,7 @@ def main():
                 pages[ROOT / course['id'] / (ch['id'] + '.html')] = notes_page(course, ch, data[ch['id']], nxt)
                 summary.append('%s %s：%d 个知识点' % (course['id'], ch['id'],
                                                      sum(1 for k in data[ch['id']]['kps'] if k['no'])))
+            course['_count'] = sum(sum(1 for x in v['kps'] if x['no']) for v in data.values())
             pages[ROOT / course['id'] / 'index.html'] = course_page(
                 course, {k: sum(1 for x in v['kps'] if x['no']) for k, v in data.items()})
             continue
@@ -706,6 +725,7 @@ def main():
             f = cdir / (ch['id'] + '.md')
             if f.exists():
                 data[ch['id']] = parse_chapter(f)
+        course['_count'] = sum(len(v) for v in data.values())
         avail = [ch for ch in chapters if ch['id'] in data]
         for i, ch in enumerate(avail):
             nxt = avail[i + 1] if i + 1 < len(avail) else None

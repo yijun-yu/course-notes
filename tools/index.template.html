@@ -114,6 +114,14 @@
   .book.light .spine h2{color:#2b2419}
   .book.light .spine .en{color:rgb(43 36 25 / .72)}
 
+  /* ============ 书签：已有内容的书 ============ */
+  .book .mark{display:none}
+  .book.has .mark{
+    display:block;position:absolute;top:-4px;right:18%;width:12px;height:44px;z-index:3;pointer-events:none;
+    background:linear-gradient(90deg,#a63f2f,#c9604a 55%,#a63f2f);clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%);
+  }
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
   /* ============ 一封信 ============ */
   .letter{
     flex:none;align-self:flex-end;margin:0 calc(10px * var(--k)) 0 auto;padding:0 0 calc(4px * var(--k));
@@ -145,7 +153,8 @@
   .letter-dialog[open]{animation:unfold .8s var(--ease) both}
   @keyframes unfold{from{opacity:0;transform:translateY(46px) scale(.96)}to{opacity:1;transform:none}}
   .paper{
-    position:relative;padding:clamp(30px,6vw,54px) clamp(26px,6vw,58px) 30px;border-radius:3px;
+    --px:clamp(26px,6vw,58px);--py:clamp(30px,6vw,54px);
+    position:relative;padding:var(--py) var(--px) 30px;border-radius:3px;
     background:linear-gradient(180deg,#f4ebd5,#eadfc4);
     box-shadow:0 40px 80px -20px rgb(0 0 0 / .8),inset 0 0 70px rgb(150 120 60 / .14);
   }
@@ -158,6 +167,9 @@
   .paper form{display:flex;justify-content:center;margin-top:18px}
   .paper .close{font-family:var(--serif);font-size:14px;letter-spacing:.3em;padding:6px 6px 6px 12px;color:rgb(43 36 25 / .7);background:none;border:0;border-bottom:1px solid rgb(43 36 25 / .3);cursor:pointer}
   .paper .close:hover{color:#2b2419;border-bottom-color:#2b2419}
+  .paper .x{position:sticky;top:calc(var(--py) - 2px);height:0;margin:0;display:flex;justify-content:flex-end;z-index:3}
+  .paper .x .xbtn{width:38px;height:38px;margin:calc(14px - var(--py)) calc(14px - var(--px)) 0 0;border-radius:50%;border:1px solid rgb(43 36 25 / .28);background:rgb(244 235 213 / .94);color:#2b2419;font-size:22px;line-height:1;cursor:pointer}
+  .paper .x .xbtn:hover{background:#fff7e3;border-color:rgb(43 36 25 / .55)}
 
   /* ============ 待续：书架上的空位 ============ */
   .slot{
@@ -209,13 +221,14 @@
   @media (max-width:720px){
     .series-head{padding:0 2px 14px}
     .series + .series{margin-top:44px}
+    .book.has .mark{top:-3px;right:auto;left:44px;height:34px}
   }
   @media (min-width:1241px){
     .letter:hover .env-label,.letter:focus-visible .env-label,.letter.open .env-label{opacity:0}
   }
   @media (max-width:1240px){
-    .letter{order:-1;flex-direction:row;justify-content:flex-start;align-self:stretch;width:100%;margin:0;padding:16px 22px;gap:22px;border:1px dashed rgb(236 228 212 / .2);border-radius:2px;text-align:left}
-    .env{width:88px;height:60px}
+    .letter{order:-1;flex-direction:row;justify-content:flex-start;align-self:stretch;width:100%;margin:0;padding:6px 6px 14px;gap:18px;border:0;text-align:left}
+    .env{width:70px;height:48px}
     .env-label{font-size:15px;letter-spacing:.16em;color:var(--ink-2)}
   }
   @media (min-width:721px) and (max-width:1240px){
